@@ -19,7 +19,7 @@ class SiteController extends BaseController
 
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'company_id'     => 'required|exists:companies,id',
             'site_code'      => 'required|string|max:20|unique:company_sites',
             'site_name'      => 'required|string|max:100',
@@ -33,19 +33,21 @@ class SiteController extends BaseController
             'gps_radius'     => 'required|integer|min:10|max:5000',
         ]);
 
-        $site = CompanySite::create($request->validated());
+        $site = CompanySite::create($validated);
 
         return $this->successResponse($site, 'Site berhasil dibuat', 201);
     }
 
-    public function show(CompanySite $site): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $site = CompanySite::findOrFail($id);
         return $this->successResponse($site->load(['company', 'employees']));
     }
 
-    public function update(Request $request, CompanySite $site): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
-        $request->validate([
+        $site = CompanySite::findOrFail($id);
+        $validated = $request->validate([
             'site_name'      => 'sometimes|string|max:100',
             'address'        => 'nullable|string',
             'project_manager'=> 'nullable|string|max:100',
@@ -56,13 +58,14 @@ class SiteController extends BaseController
             'end_date'       => 'nullable|date',
         ]);
 
-        $site->update($request->validated());
+        $site->update($validated);
 
         return $this->successResponse($site->fresh(), 'Site diperbarui');
     }
 
-    public function destroy(CompanySite $site): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $site = CompanySite::findOrFail($id);
         if ($site->employees()->active()->exists()) {
             return $this->errorResponse('Site masih memiliki karyawan aktif');
         }

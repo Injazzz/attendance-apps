@@ -9,7 +9,7 @@ class OvertimeRequest extends Model
     protected $fillable = [
         'employee_id','site_id','overtime_date','start_time',
         'end_time','total_hours','reason','status',
-        'approved_by','approved_at',
+        'approved_by','approved_at','rejection_reason',
     ];
 
     protected $casts = [

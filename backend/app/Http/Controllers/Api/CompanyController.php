@@ -36,13 +36,15 @@ class CompanyController extends BaseController
         return $this->successResponse($company, 'Perusahaan berhasil dibuat', 201);
     }
 
-    public function show(Company $company): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $company = Company::findOrFail($id);
         return $this->successResponse($company->load('sites'));
     }
 
-    public function update(Request $request, Company $company): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
+        $company = Company::findOrFail($id);
         $request->validate([
             'company_name' => 'sometimes|string|max:100',
             'address'      => 'nullable|string',
@@ -61,8 +63,9 @@ class CompanyController extends BaseController
         return $this->successResponse($company->fresh(), 'Perusahaan diperbarui');
     }
 
-    public function destroy(Company $company): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $company = Company::findOrFail($id);
         return $this->errorResponse('Perusahaan tidak dapat dihapus dari sistem');
     }
 }

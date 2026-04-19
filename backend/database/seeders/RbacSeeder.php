@@ -51,6 +51,7 @@ class RbacSeeder extends Seeder
                 'reports.daily', 'reports.weekly',
                 'reports.monthly', 'reports.yearly', 'reports.export',
                 'notifications.view', 'overtime.view_all',
+                'departments.manage', 'positions.manage', 'sites.view',
             ],
             'finance' => [
                 'dashboard.view',

@@ -42,16 +42,18 @@ class QrDisplayController extends BaseController
         ], 'QR Display berhasil dibuat', 201);
     }
 
-    public function show(QrDisplay $qrDisplay): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $qrDisplay = QrDisplay::findOrFail($id);
         return $this->successResponse(
             $qrDisplay->load(['site', 'department', 'activeSession'])
         );
     }
 
-    public function update(Request $request, QrDisplay $qrDisplay): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
-        $request->validate([
+        $qrDisplay = QrDisplay::findOrFail($id);
+        $validated = $request->validate([
             'display_name'  => 'sometimes|string|max:100',
             'location'      => 'nullable|string|max:200',
             'department_id' => 'nullable|exists:departments,id',
@@ -60,13 +62,14 @@ class QrDisplayController extends BaseController
             'max_scans'     => 'sometimes|integer|min:1',
         ]);
 
-        $qrDisplay->update($request->validated());
+        $qrDisplay->update($validated);
 
         return $this->successResponse($qrDisplay->fresh(), 'QR Display diperbarui');
     }
 
-    public function destroy(QrDisplay $qrDisplay): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $qrDisplay = QrDisplay::findOrFail($id);
         $qrDisplay->update(['status' => 'inactive']);
         return $this->successResponse(null, 'QR Display dinonaktifkan');
     }

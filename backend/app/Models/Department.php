@@ -34,4 +34,16 @@ class Department extends Model
     {
         return $this->hasMany(Employee::class);
     }
+
+    public function positions(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Position::class,
+            Employee::class,
+            'department_id',
+            'id',
+            'id',
+            'position_id'
+        );
+    }
 }

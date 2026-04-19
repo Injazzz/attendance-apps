@@ -15,11 +15,13 @@ class EmployeeResource extends JsonResource
             'email'           => $this->email,
             'phone'           => $this->phone,
             'gender'          => $this->gender,
-            'birthdate'       => $this->birthdate?->format('d/m/Y'),
-            'hire_date'       => $this->hire_date?->format('d/m/Y'),
+            'birthplace'      => $this->birthplace,
+            'birthdate'       => $this->birthdate?->format('Y-m-d'),
+            'marital_status'  => $this->marital_status,
+            'hire_date'       => $this->hire_date?->format('Y-m-d'),
             'employment_type' => $this->employment_type,
             'status'          => $this->status,
-            'photo_url'       => $this->getFirstMediaUrl('photo'),
+            'photo_url'       => $this->photo_url,
 
             'department' => $this->whenLoaded('department', fn() => [
                 'id'   => $this->department->id,

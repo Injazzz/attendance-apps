@@ -2,6 +2,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Overtime\StoreOvertimeRequest;
+use App\Http\Requests\Overtime\ApproveOvertimeRequest;
+use App\Http\Requests\Overtime\RejectOvertimeRequest;
 use App\Http\Resources\OvertimeRequestResource;
 use App\Models\OvertimeRequest;
 use App\Services\OvertimeApprovalService;
@@ -58,8 +60,9 @@ class OvertimeController extends BaseController
         );
     }
 
-    public function show(OvertimeRequest $overtimeRequest): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $overtimeRequest = OvertimeRequest::findOrFail($id);
         return $this->successResponse(
             new OvertimeRequestResource(
                 $overtimeRequest->load(['employee.department', 'approvedBy'])
@@ -67,13 +70,14 @@ class OvertimeController extends BaseController
         );
     }
 
-    public function approve(Request $request, OvertimeRequest $overtimeRequest): JsonResponse
+    public function approve(ApproveOvertimeRequest $request, int $id): JsonResponse
     {
-        $request->validate(['notes' => 'nullable|string|max:500']);
-
+        $overtimeRequest = OvertimeRequest::findOrFail($id);
         $approver = $request->user()->employee;
-        $result   = $this->approvalService->approveOvertime(
-            $overtimeRequest, $approver, $request->notes
+        $result = $this->approvalService->approveOvertime(
+            $overtimeRequest,
+            $approver,
+            $request->validated('notes')
         );
 
         if (!isset($result['data'])) {
@@ -86,37 +90,23 @@ class OvertimeController extends BaseController
         );
     }
 
-    public function reject(Request $request, OvertimeRequest $overtimeRequest): JsonResponse
+    public function reject(RejectOvertimeRequest $request, int $id): JsonResponse
     {
-        $request->validate(['reason' => 'required|string|min:5|max:500']);
+        $overtimeRequest = OvertimeRequest::findOrFail($id);
+        $approver = $request->user()->employee;
+        $result = $this->approvalService->rejectOvertime(
+            $overtimeRequest,
+            $approver,
+            $request->validated('reason')
+        );
 
-        if ($overtimeRequest->status->value !== 'pending') {
-            return $this->errorResponse('Pengajuan sudah diproses sebelumnya');
+        if (!isset($result['data'])) {
+            return $this->errorResponse($result['message']);
         }
 
-        $approver = $request->user()->employee;
-
-        $overtimeRequest->update([
-            'status'      => 'rejected',
-            'approved_by' => $approver->id,
-            'approved_at' => now(),
-        ]);
-
-        // Notifikasi ke karyawan
-        \App\Models\Notification::create([
-            'user_id'           => $overtimeRequest->employee->user->id,
-            'notification_type' => 'approval',
-            'title'             => 'Pengajuan Lembur Ditolak',
-            'message'           => "Lembur {$overtimeRequest->overtime_date->format('d/m/Y')} ditolak: {$request->reason}",
-            'data'              => ['overtime_id' => $overtimeRequest->id],
-            'action_url'        => "/overtime/{$overtimeRequest->id}",
-        ]);
-
-        broadcast(new \App\Events\OvertimeStatusChanged($overtimeRequest, 'rejected'));
-
         return $this->successResponse(
-            new OvertimeRequestResource($overtimeRequest->fresh()),
-            'Lembur ditolak'
+            new OvertimeRequestResource($result['data']),
+            $result['message']
         );
     }
 }

@@ -34,16 +34,12 @@ class AuthController extends BaseController
     public function logout(Request $request): JsonResponse
     {
         $browserToken = $request->header('X-Browser-Token');
-        $fingerprint  = $request->header('X-Device-Fingerprint');
 
-        if (!$browserToken || !$fingerprint) {
-            return $this->errorResponse('Device token tidak lengkap', 401);
+        if (!$browserToken) {
+            return $this->errorResponse('browser token tidak sesuai', 401);
         }
 
-        $fingerprintHash = hash('sha256', $fingerprint);
-
         $device = PwaDevice::where('browser_token', $browserToken)
-            ->where('device_fingerprint', $fingerprintHash)
             ->where('user_id', $request->user()->id)
             ->where('status', 'active')
             ->first();

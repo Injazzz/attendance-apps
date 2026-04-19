@@ -29,8 +29,9 @@ class UserController extends BaseController
         return $this->paginatedResponse($users);
     }
 
-    public function show(User $user): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $user = User::findOrFail($id);
         return $this->successResponse(
             new UserResource(
                 $user->load('employee.department', 'employee.position', 'employee.site')
@@ -38,8 +39,9 @@ class UserController extends BaseController
         );
     }
 
-    public function toggleActive(User $user): JsonResponse
+    public function toggleActive(int $id): JsonResponse
     {
+        $user = User::findOrFail($id);
         // Super admin tidak bisa dinonaktifkan
         if ($user->role === 'super_admin') {
             return $this->errorResponse('Akun super admin tidak dapat dinonaktifkan');
@@ -57,8 +59,9 @@ class UserController extends BaseController
         );
     }
 
-    public function resetPassword(Request $request, User $user): JsonResponse
+    public function resetPassword(Request $request, int $id): JsonResponse
     {
+        $user = User::findOrFail($id);
         $request->validate([
             'new_password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
@@ -78,8 +81,9 @@ class UserController extends BaseController
         );
     }
 
-    public function unlock(User $user): JsonResponse
+    public function unlock(int $id): JsonResponse
     {
+        $user = User::findOrFail($id);
         $user->update([
             'failed_login_attempts' => 0,
             'locked_until'          => null,
@@ -88,8 +92,9 @@ class UserController extends BaseController
         return $this->successResponse(null, 'Akun berhasil dibuka kuncinya');
     }
 
-    public function changeRole(Request $request, User $user): JsonResponse
+    public function changeRole(Request $request, int $id): JsonResponse
     {
+        $user = User::findOrFail($id);
         // Super admin tidak bisa diubah rolenya
         if ($user->role === 'super_admin') {
             return $this->errorResponse('Role super admin tidak dapat diubah');

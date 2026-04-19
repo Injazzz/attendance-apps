@@ -24,23 +24,42 @@ class DeviceController extends BaseController
         return $this->paginatedResponse($devices);
     }
 
-    public function block(PwaDevice $device): JsonResponse
+    public function block(int $id): JsonResponse
     {
+        $device = PwaDevice::findOrFail($id);
         $device->update(['status' => 'blocked']);
         $device->user->tokens()->delete();
 
         return $this->successResponse(null, 'Perangkat diblokir dan sesi dihapus');
     }
 
-    public function reset(PwaDevice $device): JsonResponse
+    public function reset(int $id): JsonResponse
     {
-        $user = $device->user;
-        $device->delete();
-        $user->tokens()->delete();
+        $device = PwaDevice::findOrFail($id);
+        try {
+            $user = $device->user;
 
-        return $this->successResponse(
-            null,
-            'Perangkat direset. Pengguna bisa login dari perangkat baru.'
-        );
+            if (!$user) {
+                // Device yang orphaned, langsung delete
+                $device->delete();
+                return $this->successResponse(
+                    null,
+                    'Perangkat direset.'
+                );
+            }
+
+            // Delete device
+            $device->delete();
+
+            // Delete all tokens for the user
+            $user->tokens()->delete();
+
+            return $this->successResponse(
+                null,
+                'Perangkat direset. Pengguna bisa login dari perangkat baru.'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('Gagal mereset perangkat: ' . $e->getMessage(), 500);
+        }
     }
 }

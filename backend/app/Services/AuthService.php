@@ -43,28 +43,45 @@ class AuthService extends BaseService
             return $this->fail("Akun terkunci. Coba lagi dalam {$menit} menit.");
         }
 
-        // Device Lock
+        // Device Lock - cek apakah sudah ada device dengan fingerprint yang sama
+        // mencari baik yang active maupun inactive (untuk reactivation setelah logout)
         $existingDevice = PwaDevice::where('user_id', $user->id)
-            ->where('status', 'active')
+            ->where('device_fingerprint', $fingerprintHash)
             ->first();
 
         if ($existingDevice) {
-            if ($existingDevice->device_fingerprint !== $fingerprintHash) {
+            if ($existingDevice->status === 'active') {
+                // Device sudah active dan fingerprint match - gunakan token lama
+                $browserToken = $existingDevice->browser_token;
+
+                $existingDevice->update([
+                    'last_active' => now(),
+                    'device_info' => $deviceInfo,
+                ]);
+            } else {
+                // Device inactive (telah logout) - reactivate dengan token yang sama
+                $browserToken = $existingDevice->browser_token;
+
+                $existingDevice->update([
+                    'status'      => 'active',
+                    'last_active' => now(),
+                    'device_info' => $deviceInfo,
+                ]);
+            }
+
+            $device = $existingDevice;
+        } else {
+            // Device baru - cek apakah user sudah punya device active lain
+            $otherActiveDevice = PwaDevice::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($otherActiveDevice) {
                 return $this->fail(
                     'Akun sudah login di device lain. Silakan logout terlebih dahulu.'
                 );
             }
 
-            // gunakan token lama (jangan regenerate)
-            $browserToken = $existingDevice->browser_token;
-
-            $existingDevice->update([
-                'last_active' => now(),
-                'device_info' => $deviceInfo,
-            ]);
-
-            $device = $existingDevice;
-        } else {
             $browserToken = Str::random(64);
 
             $device = PwaDevice::create([

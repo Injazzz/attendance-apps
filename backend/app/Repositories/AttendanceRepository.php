@@ -33,13 +33,13 @@ class AttendanceRepository implements AttendanceRepositoryInterface
     public function getAttendanceForExport(array $filters): mixed
     {
         return AttendanceRecord::with([
-                'employee:id,full_name,employee_code',
+                'employee:id,full_name,employee_code,department_id,position_id',
                 'employee.department:id,dept_name',
                 'employee.position:id,position_name',
                 'site:id,site_name',
             ])
             ->when($filters['site_id'] ?? null, fn($q, $v) => $q->where('site_id', $v))
-            ->when($filters['department_id'] ?? null, fn($q, $v) =>
+            ->when($filters['dept_id'] ?? null, fn($q, $v) =>
                 $q->whereHas('employee', fn($eq) => $eq->where('department_id', $v))
             )
             ->whereBetween('attendance_date', [$filters['start_date'], $filters['end_date']])

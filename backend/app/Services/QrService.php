@@ -80,6 +80,23 @@ class QrService extends BaseService
         return $expired->count();
     }
 
+    /**
+     * Generate a unified QR payload for an employee (new unified attendance system)
+     * Embeds employee_id and employment type (department or site)
+     *
+     * @param int $employeeId
+     * @param string $employeeType 'department' or 'site'
+     * @return string JSON payload with employee data
+     */
+    public function buildUnifiedQrPayload(int $employeeId, string $employeeType): string
+    {
+        return json_encode([
+            'employee_id' => $employeeId,
+            'type'        => $employeeType,
+            'timestamp'   => now()->timestamp,
+        ]);
+    }
+
     private function buildQrPayload(QrDisplay $display, string $token): string
     {
         return json_encode([
@@ -93,12 +110,52 @@ class QrService extends BaseService
 
     public function generateQrImage(string $token): string
     {
-        // Return base64 QR image
-        return base64_encode(
-            QrCode::format('png')
-                ->size(300)
-                ->errorCorrection('H')
-                ->generate($token)
-        );
+        // Use GD-based PNG format as fallback if imagick not available
+        try {
+            return base64_encode(
+                QrCode::format('png')
+                    ->size(300)
+                    ->errorCorrection('H')
+                    ->generate($token)
+            );
+        } catch (\Throwable $e) {
+            // Fallback to SVG if PNG fails
+            return base64_encode(
+                QrCode::format('svg')
+                    ->size(300)
+                    ->errorCorrection('H')
+                    ->generate($token)
+            );
+        }
+    }
+
+    /**
+     * Generate QR image from unified payload (employee_id + type)
+     * Used for generating direct employee attendance QR codes
+     *
+     * @param int $employeeId
+     * @param string $employeeType 'department' or 'site'
+     * @return string Base64 encoded QR image
+     */
+    public function generateUnifiedQrImage(int $employeeId, string $employeeType): string
+    {
+        $payload = $this->buildUnifiedQrPayload($employeeId, $employeeType);
+
+        try {
+            return base64_encode(
+                QrCode::format('png')
+                    ->size(300)
+                    ->errorCorrection('H')
+                    ->generate($payload)
+            );
+        } catch (\Throwable $e) {
+            // Fallback to SVG if PNG fails
+            return base64_encode(
+                QrCode::format('svg')
+                    ->size(300)
+                    ->errorCorrection('H')
+                    ->generate($payload)
+            );
+        }
     }
 }

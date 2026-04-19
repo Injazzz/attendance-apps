@@ -42,7 +42,7 @@ class OvertimeApprovalService extends BaseService
 
     public function approveOvertime(OvertimeRequest $overtime, Employee $approver, ?string $notes = null): array
     {
-        if ($overtime->status !== 'pending') {
+        if ($overtime->status->value !== 'pending') {
             return $this->fail('Pengajuan sudah diproses sebelumnya');
         }
 
@@ -70,6 +70,39 @@ class OvertimeApprovalService extends BaseService
         ]);
 
         return $this->success($overtime, 'Lembur berhasil disetujui');
+    }
+
+    public function rejectOvertime(OvertimeRequest $overtime, Employee $approver, string $reason): array
+    {
+        if ($overtime->status->value !== 'pending') {
+            return $this->fail('Pengajuan sudah diproses sebelumnya');
+        }
+
+        // Validasi approver punya wewenang
+        if (!$this->canApprove($approver, $overtime)) {
+            return $this->fail('Anda tidak memiliki wewenang untuk menolak lembur ini');
+        }
+
+        $overtime->update([
+            'status'            => 'rejected',
+            'approved_by'       => $approver->id,
+            'approved_at'       => now(),
+            'rejection_reason'  => $reason,
+        ]);
+
+        broadcast(new OvertimeStatusChanged($overtime, 'rejected'));
+
+        // Notifikasi ke karyawan
+        \App\Models\Notification::create([
+            'user_id'           => $overtime->employee->user->id,
+            'notification_type' => 'approval',
+            'title'             => 'Pengajuan Lembur Ditolak',
+            'message'           => "Pengajuan lembur tanggal {$overtime->overtime_date->format('d/m/Y')} ditolak. Alasan: {$reason}",
+            'data'              => ['overtime_id' => $overtime->id],
+            'action_url'        => "/overtime/{$overtime->id}",
+        ]);
+
+        return $this->success($overtime, 'Lembur berhasil ditolak');
     }
 
     private function canApprove(Employee $approver, OvertimeRequest $overtime): bool

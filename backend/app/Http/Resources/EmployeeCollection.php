@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use App\Models\Employee;
 
 class EmployeeCollection extends ResourceCollection
 {
@@ -16,21 +17,24 @@ class EmployeeCollection extends ResourceCollection
 
     public function toArray(Request $request): array
     {
+        // Get total statistics from database (not from paginated collection)
+        $totalActive = Employee::where('status', 'active')->count();
+        $totalInactive = Employee::whereIn('status', ['inactive', 'resigned', 'terminated'])->count();
+        $totalByType = Employee::selectRaw('employment_type, count(*) as count')
+            ->groupBy('employment_type')
+            ->pluck('count', 'employment_type')
+            ->toArray();
+
         return [
             // Data list karyawan (sudah di-transform oleh EmployeeResource)
             'data' => $this->collection,
 
-            // Statistik tambahan di level collection
-            // Ini yang tidak bisa dilakukan oleh Resource biasa
+            // Statistik dari database (bukan dari current page)
             'summary' => [
-                'total'      => $this->collection->count(),
-                'active'     => $this->collection->where('status', 'active')->count(),
-                'inactive'   => $this->collection->whereIn('status', [
-                    'inactive', 'resigned', 'terminated'
-                ])->count(),
-                'by_type'    => $this->collection
-                    ->groupBy('employment_type')
-                    ->map(fn($group) => $group->count()),
+                'total'      => $totalActive + $totalInactive,
+                'active'     => $totalActive,
+                'inactive'   => $totalInactive,
+                'by_type'    => $totalByType,
             ],
         ];
     }

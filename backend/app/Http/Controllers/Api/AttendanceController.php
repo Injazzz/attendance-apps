@@ -2,7 +2,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Attendance\QrScanRequest;
-use App\Http\Requests\Attendance\SelfieRequest;
+use App\Http\Requests\Attendance\UnifiedQrScanRequest;
 use App\Http\Resources\AttendanceRecordResource;
 use App\Models\AttendanceRecord;
 use App\Services\AttendanceService;
@@ -14,9 +14,38 @@ class AttendanceController extends BaseController
 {
     public function __construct(private readonly AttendanceService $attendanceService) {}
 
+    /**
+     * Unified QR scan endpoint - replaces both qrScan and selfie methods
+     * Accepts QR payload with embedded employee_id and type information
+     */
+    public function unifiedQrScan(UnifiedQrScanRequest $request): JsonResponse
+    {
+        $result = $this->attendanceService->processUnifiedQrScan(
+            $request->qr_data,
+            $request->gps,
+            $request->device_info
+        );
+
+        if (!isset($result['data'])) {
+            return $this->errorResponse($result['message']);
+        }
+
+        return $this->successResponse($result['data'], $result['message']);
+    }
+
+    /**
+     * Original QR scan method - kept for backward compatibility
+     * DEPRECATED: Use unifiedQrScan instead
+     */
     public function qrScan(QrScanRequest $request): JsonResponse
     {
-        $employee = $request->user()->employee;
+        $user = $request->user()->load('employee');
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return $this->errorResponse('Data karyawan tidak ditemukan', 404);
+        }
+
         $result = $this->attendanceService->processQrScan(
             $employee,
             $request->session_token,
@@ -31,26 +60,15 @@ class AttendanceController extends BaseController
         return $this->successResponse($result['data'], $result['message']);
     }
 
-    public function selfie(SelfieRequest $request): JsonResponse
-    {
-        $employee = $request->user()->employee;
-        $result = $this->attendanceService->processSelfieAttendance(
-            $employee,
-            $request->file('photo'),
-            $request->gps,
-            $request->device_info
-        );
-
-        if (!isset($result['data'])) {
-            return $this->errorResponse($result['message']);
-        }
-
-        return $this->successResponse($result['data'], $result['message']);
-    }
-
     public function today(Request $request): JsonResponse
     {
-        $employee = $request->user()->employee;
+        $user = $request->user()->load('employee');
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return $this->errorResponse('Data karyawan tidak ditemukan', 404);
+        }
+
         $record = \App\Models\AttendanceRecord::with(['site'])
             ->where('employee_id', $employee->id)
             ->where('attendance_date', today())
@@ -63,7 +81,13 @@ class AttendanceController extends BaseController
 
     public function history(Request $request): JsonResponse
     {
-        $employee = $request->user()->employee;
+        $user = $request->user()->load('employee');
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return $this->errorResponse('Data karyawan tidak ditemukan', 404);
+        }
+
         $records = \App\Models\AttendanceRecord::with(['site'])
             ->where('employee_id', $employee->id)
             ->when($request->start_date, fn($q) => $q->where('attendance_date', '>=', $request->start_date))

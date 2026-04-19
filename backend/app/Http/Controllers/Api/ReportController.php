@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exports\AttendanceExport;
-use App\Http\Requests\Report\ExportReportRequest;
+use App\Http\Requests\Report\AttendanceReportRequest;
 use App\Http\Resources\AttendanceRecordCollection;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSummary;
@@ -19,7 +19,7 @@ class ReportController extends BaseController
         private readonly AttendanceRepositoryInterface $repo
     ) {}
 
-    public function attendance(ExportReportRequest $request): JsonResponse
+    public function attendance(AttendanceReportRequest $request): JsonResponse
     {
         $records = AttendanceRecord::with([
             'employee:id,full_name,employee_code,department_id,position_id',
@@ -77,7 +77,7 @@ class ReportController extends BaseController
             'format'     => 'nullable|in:xlsx,csv',
         ]);
 
-        $filters = $request->only(['start_date', 'end_date', 'site_id', 'department_id']);
+        $filters = $request->only(['start_date', 'end_date', 'site_id', 'dept_id']);
         $filename = "laporan_absensi_{$request->start_date}_{$request->end_date}.xlsx";
 
         return Excel::download(

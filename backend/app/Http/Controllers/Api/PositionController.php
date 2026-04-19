@@ -19,7 +19,7 @@ class PositionController extends BaseController
 
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'job_family_id'    => 'required|exists:job_families,id',
             'position_code'    => 'required|string|max:10|unique:positions,position_code',
             'position_name'    => 'required|string|max:100',
@@ -28,32 +28,35 @@ class PositionController extends BaseController
             'min_qualification'=> 'nullable|string',
         ]);
 
-        $position = Position::create($request->validated());
+        $position = Position::create($validated);
 
         return $this->successResponse($position, 'Jabatan berhasil dibuat', 201);
     }
 
-    public function show(Position $position): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $position = Position::findOrFail($id);
         return $this->successResponse($position->load('jobFamily'));
     }
 
-    public function update(Request $request, Position $position): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
-        $request->validate([
+        $position = Position::findOrFail($id);
+        $validated = $request->validate([
             'position_name'      => 'sometimes|string|max:100',
             'position_level'     => 'sometimes|integer|min:1|max:99',
             'job_description'    => 'nullable|string',
             'custom_permissions' => 'nullable|array',
         ]);
 
-        $position->update($request->validated());
+        $position->update($validated);
 
         return $this->successResponse($position->fresh(), 'Jabatan diperbarui');
     }
 
-    public function destroy(Position $position): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $position = Position::findOrFail($id);
         if ($position->employees()->exists()) {
             return $this->errorResponse('Tidak bisa hapus jabatan yang masih dipakai karyawan');
         }

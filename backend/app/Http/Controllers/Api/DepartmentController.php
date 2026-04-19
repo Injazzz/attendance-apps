@@ -19,7 +19,7 @@ class DepartmentController extends BaseController
 
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'company_id'           => 'required|exists:companies,id',
             'dept_code'            => 'required|string|max:10',
             'dept_name'            => 'required|string|max:50',
@@ -28,33 +28,36 @@ class DepartmentController extends BaseController
             'parent_department_id' => 'nullable|exists:departments,id',
         ]);
 
-        $dept = Department::create($request->validated());
+        $dept = Department::create($validated);
 
         return $this->successResponse($dept, 'Departemen berhasil dibuat', 201);
     }
 
-    public function show(Department $department): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $department = Department::findOrFail($id);
         return $this->successResponse(
             $department->load(['head', 'parent', 'children', 'employees'])
         );
     }
 
-    public function update(Request $request, Department $department): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
-        $request->validate([
+        $department = Department::findOrFail($id);
+        $validated = $request->validate([
             'dept_name'          => 'sometimes|string|max:50',
             'cost_center'        => 'nullable|string|max:20',
             'department_head_id' => 'nullable|exists:employees,id',
         ]);
 
-        $department->update($request->validated());
+        $department->update($validated);
 
         return $this->successResponse($department->fresh(), 'Departemen diperbarui');
     }
 
-    public function destroy(Department $department): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $department = Department::findOrFail($id);
         if ($department->employees()->active()->exists()) {
             return $this->errorResponse('Tidak bisa hapus departemen yang masih memiliki karyawan aktif');
         }
