@@ -36,8 +36,8 @@ class CompanySeeder extends Seeder
             'gps_radius'     => 100,      // 100 meter radius
         ]);
 
-        // 3. Job Family
-        $jobFamily = JobFamily::create([
+        // 3. Ambil Management job family yang sudah di-seed
+        $jobFamily = JobFamily::where('family_code', 'MGMT')->first() ?? JobFamily::create([
             'family_code'       => 'MGMT',
             'family_name'       => 'Management',
             'level_range_start' => 1,

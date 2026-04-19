@@ -16,9 +16,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RbacSeeder::class,           // 1. Roles & permissions dulu
-            CompanySeeder::class,        // 2. Data perusahaan
-            SystemSettingSeeder::class,  // 3. Setting sistem
-            AdminUserSeeder::class,      // 4. Akun super admin
+            JobFamilySeeder::class,      // 2. Job families
+            CompanySeeder::class,        // 3. Data perusahaan
+            SystemSettingSeeder::class,  // 4. Setting sistem
+            AdminUserSeeder::class,      // 5. Super admin user
+            UserSeeder::class,           // 6. Test users dengan berbagai roles
         ]);
     }
 }

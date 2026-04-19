@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { companyApi, siteApi, departmentApi, positionApi } from "@/lib/api";
+import {
+  companyApi,
+  siteApi,
+  departmentApi,
+  jobFamilyApi,
+  positionApi,
+} from "@/lib/api";
 import { toast } from "sonner";
 
 // ── Companies ────────────────────────────────────────────
@@ -130,7 +136,14 @@ export function useDeleteDepartment() {
       toast.error(e.response?.data?.message ?? "Gagal menghapus departemen"),
   });
 }
-
+// ── Job Families ─────────────────────────────────────
+export function useJobFamilies(params?: object) {
+  return useQuery({
+    queryKey: ["jobFamilies", params],
+    queryFn: () => jobFamilyApi.getAll(params),
+    staleTime: 1000 * 60 * 10,
+  });
+}
 // ── Positions ────────────────────────────────────────────
 export function usePositions(params?: object) {
   return useQuery({

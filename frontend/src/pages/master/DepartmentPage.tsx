@@ -9,6 +9,7 @@ import {
   useUpdateDepartment,
   useDeleteDepartment,
 } from "@/hooks/useMasterData";
+import { useEmployees } from "@/hooks/useEmployee";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -31,13 +32,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Pencil, Trash2, Building2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, Loader2, X } from "lucide-react";
 
 const schema = z.object({
   dept_code: z.string().min(1, "Kode wajib diisi"),
   dept_name: z.string().min(2, "Nama wajib diisi"),
   cost_center: z.string().optional(),
   company_id: z.string().min(1),
+  department_head_id: z.string().optional().nullable(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -46,40 +48,71 @@ export default function DepartmentPage() {
   const [open, setOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [headId, setHeadId] = useState<string>("");
+  const [headSearch, setHeadSearch] = useState<string>("");
 
   const { data, isLoading } = useDepartments();
+  const { data: employees, isLoading: employeesLoading } = useEmployees();
   const createMutation = useCreateDepartment();
   const updateMutation = useUpdateDepartment();
   const deleteMutation = useDeleteDepartment();
 
   const departments = data?.data ?? [];
+  const employeeList = employees?.data ?? [];
+
+  // Filter employees berdasarkan search term
+  const filteredEmployees = employeeList.filter(
+    (emp: any) =>
+      emp.full_name.toLowerCase().includes(headSearch.toLowerCase()) ||
+      emp.employee_code.toLowerCase().includes(headSearch.toLowerCase()),
+  );
+
+  // Get selected employee name
+  const selectedEmployee = employeeList.find(
+    (emp: any) => String(emp.id) === headId,
+  );
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   const openCreate = () => {
     setEditData(null);
-    reset({ company_id: "1" });
+    setHeadId("");
+    setHeadSearch("");
+    reset({ company_id: "1", department_head_id: null });
     setOpen(true);
   };
 
   const openEdit = (dept: any) => {
     setEditData(dept);
+    const headIdValue = dept.department_head_id
+      ? String(dept.department_head_id)
+      : "";
+    setHeadId(headIdValue);
+    setHeadSearch("");
     reset({
       dept_code: dept.dept_code,
       dept_name: dept.dept_name,
       cost_center: dept.cost_center ?? "",
       company_id: String(dept.company_id),
+      department_head_id: headIdValue || null,
     });
     setOpen(true);
   };
 
   const onSubmit = (values: FormValues) => {
-    const payload = { ...values, company_id: parseInt(values.company_id) };
+    const payload: any = {
+      ...values,
+      company_id: parseInt(values.company_id),
+    };
+    if (values.department_head_id) {
+      payload.department_head_id = parseInt(values.department_head_id);
+    }
     if (editData) {
       updateMutation.mutate(
         { id: editData.id, data: payload },
@@ -87,6 +120,7 @@ export default function DepartmentPage() {
           onSuccess: () => {
             setOpen(false);
             reset();
+            setHeadId("");
           },
         },
       );
@@ -95,6 +129,7 @@ export default function DepartmentPage() {
         onSuccess: () => {
           setOpen(false);
           reset();
+          setHeadId("");
         },
       });
     }
@@ -226,6 +261,84 @@ export default function DepartmentPage() {
                   {errors.dept_name.message}
                 </p>
               )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Kepala Departemen</Label>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Cari nama atau kode karyawan..."
+                  value={headSearch}
+                  onChange={(e) => setHeadSearch(e.target.value)}
+                  disabled={employeesLoading}
+                  className="text-sm"
+                />
+                {selectedEmployee && (
+                  <div className="flex items-center justify-between px-3 py-2 bg-blue-50 border text-gray-700 border-blue-200 rounded-md">
+                    <span className="text-sm">
+                      ✓ {selectedEmployee.full_name} (
+                      {selectedEmployee.employee_code})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHeadId("");
+                        setHeadSearch("");
+                        setValue("department_head_id", null, {
+                          shouldValidate: true,
+                        });
+                      }}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                {headSearch && !employeesLoading && (
+                  <div className="border rounded-md max-h-40 overflow-y-auto">
+                    {filteredEmployees.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                        Karyawan tidak ditemukan
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHeadId("");
+                            setHeadSearch("");
+                            setValue("department_head_id", null, {
+                              shouldValidate: true,
+                            });
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-muted-foreground border-b transition-colors"
+                        >
+                          Tidak ada
+                        </button>
+                        {filteredEmployees.map((emp: any) => (
+                          <button
+                            key={emp.id}
+                            type="button"
+                            onClick={() => {
+                              setHeadId(String(emp.id));
+                              setHeadSearch("");
+                              setValue("department_head_id", String(emp.id), {
+                                shouldValidate: true,
+                              });
+                            }}
+                            className={`w-full px-3 py-2 text-left text-sm transition-colors border-b last:border-b-0 ${
+                              String(emp.id) === headId
+                                ? "bg-muted-foreground font-medium"
+                                : "hover:bg-blue-100/30"
+                            }`}
+                          >
+                            {emp.full_name} ({emp.employee_code})
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <DialogFooter>
               <Button

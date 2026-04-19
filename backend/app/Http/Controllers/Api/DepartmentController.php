@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Department;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DepartmentController extends BaseController
 {
@@ -30,7 +31,11 @@ class DepartmentController extends BaseController
 
         $dept = Department::create($validated);
 
-        return $this->successResponse($dept, 'Departemen berhasil dibuat', 201);
+        return $this->successResponse(
+            $dept->load(['head:id,full_name', 'parent:id,dept_name']),
+            'Departemen berhasil dibuat',
+            201
+        );
     }
 
     public function show(int $id): JsonResponse
@@ -45,6 +50,14 @@ class DepartmentController extends BaseController
     {
         $department = Department::findOrFail($id);
         $validated = $request->validate([
+            'dept_code'          => [
+                'sometimes',
+                'string',
+                'max:10',
+                Rule::unique('departments', 'dept_code')
+                    ->ignore($id)
+                    ->where('company_id', $department->company_id),
+            ],
             'dept_name'          => 'sometimes|string|max:50',
             'cost_center'        => 'nullable|string|max:20',
             'department_head_id' => 'nullable|exists:employees,id',
@@ -52,7 +65,10 @@ class DepartmentController extends BaseController
 
         $department->update($validated);
 
-        return $this->successResponse($department->fresh(), 'Departemen diperbarui');
+        return $this->successResponse(
+            $department->fresh(['head:id,full_name', 'parent:id,dept_name']),
+            'Departemen diperbarui'
+        );
     }
 
     public function destroy(int $id): JsonResponse

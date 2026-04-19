@@ -74,9 +74,10 @@ class RbacSeeder extends Seeder
             'supervisor' => [
                 'dashboard.view',
                 'employees.view', 'attendance.view_team',
-                'qr.view',
+                'qr.view', 'qr.create', 'qr.regenerate',
                 'overtime.view_own', 'overtime.approve_team',
                 'reports.daily', 'reports.weekly',
+                'sites.view',
                 'notifications.view',
             ],
             'employee' => [

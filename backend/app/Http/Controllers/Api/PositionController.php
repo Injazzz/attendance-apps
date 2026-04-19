@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Position;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PositionController extends BaseController
 {
@@ -30,7 +31,11 @@ class PositionController extends BaseController
 
         $position = Position::create($validated);
 
-        return $this->successResponse($position, 'Jabatan berhasil dibuat', 201);
+        return $this->successResponse(
+            $position->load('jobFamily:id,family_name'),
+            'Jabatan berhasil dibuat',
+            201
+        );
     }
 
     public function show(int $id): JsonResponse
@@ -43,15 +48,26 @@ class PositionController extends BaseController
     {
         $position = Position::findOrFail($id);
         $validated = $request->validate([
+            'position_code'      => [
+                'sometimes',
+                'string',
+                'max:10',
+                Rule::unique('positions', 'position_code')->ignore($id),
+            ],
             'position_name'      => 'sometimes|string|max:100',
             'position_level'     => 'sometimes|integer|min:1|max:99',
+            'job_family_id'      => 'sometimes|exists:job_families,id',
             'job_description'    => 'nullable|string',
+            'min_qualification'  => 'nullable|string',
             'custom_permissions' => 'nullable|array',
         ]);
 
         $position->update($validated);
 
-        return $this->successResponse($position->fresh(), 'Jabatan diperbarui');
+        return $this->successResponse(
+            $position->fresh('jobFamily:id,family_name'),
+            'Jabatan diperbarui'
+        );
     }
 
     public function destroy(int $id): JsonResponse

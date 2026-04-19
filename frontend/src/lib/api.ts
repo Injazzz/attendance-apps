@@ -191,6 +191,16 @@ export const departmentApi = {
   remove: (id: number) => api.delete(`/departments/${id}`).then((r) => r.data),
 };
 
+export const jobFamilyApi = {
+  getAll: (params?: object) =>
+    api.get("/job-families", { params }).then((r) => r.data),
+  getById: (id: number) => api.get(`/job-families/${id}`).then((r) => r.data),
+  create: (data: object) => api.post("/job-families", data).then((r) => r.data),
+  update: (id: number, data: object) =>
+    api.patch(`/job-families/${id}`, data).then((r) => r.data),
+  remove: (id: number) => api.delete(`/job-families/${id}`).then((r) => r.data),
+};
+
 export const positionApi = {
   getAll: (params?: object) =>
     api.get("/positions", { params }).then((r) => r.data),

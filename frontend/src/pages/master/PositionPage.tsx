@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  useJobFamilies,
   usePositions,
   useCreatePosition,
   useUpdatePosition,
@@ -17,6 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -50,34 +58,41 @@ export default function PositionPage() {
   const [open, setOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [jobFamilyId, setJobFamilyId] = useState<string>("");
 
   const { data, isLoading } = usePositions();
+  const { data: jobFamilies, isLoading: jobFamiliesLoading } = useJobFamilies();
   const createMutation = useCreatePosition();
   const updateMutation = useUpdatePosition();
   const deleteMutation = useDeletePosition();
 
   const positions = data?.data ?? [];
+  const jobFamiliesList = jobFamilies?.data ?? [];
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   const openCreate = () => {
     setEditData(null);
-    reset({ job_family_id: "1", position_level: "1" });
+    setJobFamilyId("");
+    reset({ job_family_id: "", position_level: "1" });
     setOpen(true);
   };
 
   const openEdit = (pos: any) => {
     setEditData(pos);
+    const jfId = pos.job_family_id ? String(pos.job_family_id) : "";
+    setJobFamilyId(jfId);
     reset({
       position_code: pos.position_code,
       position_name: pos.position_name,
       position_level: String(pos.position_level),
-      job_family_id: String(pos.job_family_id),
+      job_family_id: jfId,
       job_description: pos.job_description ?? "",
       min_qualification: pos.min_qualification ?? "",
     });
@@ -85,7 +100,7 @@ export default function PositionPage() {
   };
 
   const onSubmit = (values: FormValues) => {
-    const payload = {
+    const payload: any = {
       ...values,
       position_level: parseInt(values.position_level),
       job_family_id: parseInt(values.job_family_id),
@@ -97,6 +112,7 @@ export default function PositionPage() {
           onSuccess: () => {
             setOpen(false);
             reset();
+            setJobFamilyId("");
           },
         },
       );
@@ -105,6 +121,7 @@ export default function PositionPage() {
         onSuccess: () => {
           setOpen(false);
           reset();
+          setJobFamilyId("");
         },
       });
     }
@@ -234,6 +251,40 @@ export default function PositionPage() {
               {errors.position_name && (
                 <p className="text-xs text-destructive">
                   {errors.position_name.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>
+                Job Family <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={jobFamilyId}
+                onValueChange={(value) => {
+                  setJobFamilyId(value);
+                  setValue("job_family_id", value, { shouldValidate: true });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih job family" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobFamiliesLoading ? (
+                    <SelectItem value="loading" disabled>
+                      Memuat...
+                    </SelectItem>
+                  ) : (
+                    jobFamiliesList.map((jf: any) => (
+                      <SelectItem key={jf.id} value={String(jf.id)}>
+                        {jf.family_name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.job_family_id && (
+                <p className="text-xs text-destructive">
+                  {errors.job_family_id.message}
                 </p>
               )}
             </div>

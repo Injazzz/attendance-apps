@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\JobFamilyController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OvertimeController;
@@ -168,6 +169,16 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}', [SiteController::class, 'destroy'])
                 ->middleware('permission:sites.delete')->name('destroy');
         });
+
+        // Job Families
+        Route::prefix('job-families')->name('job-families.')
+            ->middleware('permission:positions.manage')->group(function () {
+                Route::get('/',              [JobFamilyController::class, 'index'])->name('index');
+                Route::get('/{id}',    [JobFamilyController::class, 'show'])->name('show');
+                Route::post('/',             [JobFamilyController::class, 'store'])->name('store');
+                Route::patch('/{id}',  [JobFamilyController::class, 'update'])->name('update');
+                Route::delete('/{id}', [JobFamilyController::class, 'destroy'])->name('destroy');
+            });
 
         // Departments
         Route::prefix('departments')->name('departments.')
