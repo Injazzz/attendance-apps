@@ -1,4 +1,4 @@
-import { attendanceApi } from "@/lib/api";
+import { attendanceApi, attendanceRuleApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const attendanceKeys = {
@@ -8,6 +8,7 @@ export const attendanceKeys = {
     [...attendanceKeys.all, "history", filters] as const,
   summary: (period: string) =>
     [...attendanceKeys.all, "summary", period] as const,
+  rules: () => [...attendanceKeys.all, "rules"] as const,
 };
 
 export function useTodayAttendance() {
@@ -38,6 +39,65 @@ export function useQrScanMutation() {
     onSuccess: () => {
       // Invalidate today's attendance agar tampilan ter-update
       queryClient.invalidateQueries({ queryKey: attendanceKeys.today() });
+    },
+  });
+}
+
+// ── Attendance Rules ────────────────────────────────────
+
+export function useAttendanceRules() {
+  return useQuery({
+    queryKey: attendanceKeys.rules(),
+    queryFn: attendanceRuleApi.getAll,
+  });
+}
+
+export function useAttendanceRuleById(id: number) {
+  return useQuery({
+    queryKey: [...attendanceKeys.rules(), id],
+    queryFn: () => attendanceRuleApi.getById(id),
+  });
+}
+
+export function useDefaultAttendanceRule() {
+  return useQuery({
+    queryKey: [...attendanceKeys.rules(), "default"],
+    queryFn: attendanceRuleApi.getDefault,
+  });
+}
+
+export function useCreateAttendanceRule() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: attendanceRuleApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.rules() });
+    },
+  });
+}
+
+export function useUpdateAttendanceRule(id: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => attendanceRuleApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.rules() });
+      queryClient.invalidateQueries({
+        queryKey: [...attendanceKeys.rules(), id],
+      });
+    },
+  });
+}
+
+export function useDeleteAttendanceRule(id: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => attendanceRuleApi.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.rules() });
     },
   });
 }

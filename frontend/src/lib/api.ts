@@ -98,6 +98,20 @@ export const attendanceApi = {
     api.patch(`/attendance/${id}/manual`, data).then((r) => r.data),
 };
 
+// ── Attendance Rules ────────────────────────────────────
+export const attendanceRuleApi = {
+  getAll: () => api.get("/attendance-rules").then((r) => r.data),
+  getById: (id: number) =>
+    api.get(`/attendance-rules/${id}`).then((r) => r.data),
+  getDefault: () => api.get("/attendance-rules/default").then((r) => r.data),
+  create: (data: object) =>
+    api.post("/attendance-rules", data).then((r) => r.data),
+  update: (id: number, data: object) =>
+    api.patch(`/attendance-rules/${id}`, data).then((r) => r.data),
+  remove: (id: number) =>
+    api.delete(`/attendance-rules/${id}`).then((r) => r.data),
+};
+
 // ── Overtime ────────────────────────────────────────────
 export const overtimeApi = {
   getAll: (params?: object) =>

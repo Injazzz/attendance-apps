@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\AttendanceRuleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DepartmentController;
@@ -198,6 +199,17 @@ Route::prefix('v1')->group(function () {
                 Route::post('/',             [PositionController::class, 'store'])->name('store');
                 Route::patch('/{id}',  [PositionController::class, 'update'])->name('update');
                 Route::delete('/{id}', [PositionController::class, 'destroy'])->name('destroy');
+            });
+
+        // ── ATTENDANCE RULES ──────────────────────────────────────
+        Route::prefix('attendance-rules')->name('attendance-rules.')
+            ->middleware('role:super_admin|admin')->group(function () {
+                Route::get('/',              [AttendanceRuleController::class, 'index'])->name('index');
+                Route::get('/default',       [AttendanceRuleController::class, 'getDefault'])->name('default');
+                Route::get('/{id}',          [AttendanceRuleController::class, 'show'])->name('show');
+                Route::post('/',             [AttendanceRuleController::class, 'store'])->name('store');
+                Route::patch('/{id}',        [AttendanceRuleController::class, 'update'])->name('update');
+                Route::delete('/{id}',       [AttendanceRuleController::class, 'destroy'])->name('destroy');
             });
 
         // ── SETTINGS ──────────────────────────────────────────────
