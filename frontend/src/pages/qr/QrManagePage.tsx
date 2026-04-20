@@ -7,14 +7,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Clock, Loader2 } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function QrDisplayManagePage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const [qrImg, setQrImg] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(0);
+
+  // Convert seconds to minutes and seconds format
+  // const formatCountdown = (seconds: number): string => {
+  //   const minutes = Math.floor(seconds / 60);
+  //   const secs = seconds % 60;
+  //   if (minutes > 0) {
+  //     return `${minutes}m ${secs}s`;
+  //   }
+  //   return `${secs}s`;
+  // };
 
   const { data, isLoading } = useQuery({
     queryKey: ["qr-session", "current", id],
@@ -27,17 +36,18 @@ export default function QrDisplayManagePage() {
     if (data?.data?.qr_image) setQrImg(data.data.qr_image);
   }, [data]);
 
-  // Countdown timer
+  // Countdown timer - checks if QR has expired
+  // Note: Countdown display is currently disabled but kept for future implementation
   useEffect(() => {
     if (!data?.data?.session?.valid_to) return;
     const interval = setInterval(() => {
-      const remaining = Math.max(
+      // Calculate remaining time for potential countdown display (see commented UI above)
+      Math.max(
         0,
         Math.floor(
           (new Date(data.data.session.valid_to).getTime() - Date.now()) / 1000,
         ),
       );
-      setCountdown(remaining);
     }, 1000);
     return () => clearInterval(interval);
   }, [data]);
@@ -92,19 +102,19 @@ export default function QrDisplayManagePage() {
           {isLoading ? (
             <Skeleton className="w-64 h-64 rounded-xl" />
           ) : qrImg ? (
-            <img src={qrImg} alt="QR Code" className="w-64 h-64 rounded-xl" />
+            <img src={qrImg} alt="QR Code" className="w-64 h-64" />
           ) : (
             <div className="w-64 h-64 bg-muted rounded-xl flex items-center justify-center">
               <p className="text-sm text-muted-foreground">QR tidak tersedia</p>
             </div>
           )}
 
-          {countdown > 0 && (
+          {/* {countdown > 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="w-4 h-4" />
-              <span>Ganti dalam {countdown} detik</span>
+              <span>Ganti dalam {formatCountdown(countdown)}</span>
             </div>
-          )}
+          )} */}
 
           <div className="text-xs text-center text-muted-foreground">
             <p>
@@ -113,12 +123,12 @@ export default function QrDisplayManagePage() {
                 {session?.qr_type === "check_in" ? "Check In" : "Check Out"}
               </span>
             </p>
-            <p>
+            {/* <p>
               Scan:{" "}
               <span className="font-medium">
                 {session?.current_scans ?? 0}x
               </span>
-            </p>
+            </p> */}
           </div>
         </CardContent>
       </Card>

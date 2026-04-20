@@ -46,22 +46,23 @@ export function initWebSocket(): EchoInstance {
   }
 
   try {
-    // Determine ports based on environment
+    // Determine connection settings based on environment
     const isProduction = import.meta.env.PROD;
-    const wsPort =
+    const reverbPort =
       (import.meta.env.VITE_REVERB_PORT as unknown as number) ?? 8080;
-    const wssPort = isProduction
-      ? 443
-      : ((import.meta.env.VITE_REVERB_PORT as unknown as number) ?? 443);
 
-    echo = new Echo({
-      broadcaster: "reverb",
+    // In production: use WSS on port 443 (HTTPS)
+    // In development: use WS on port 8080 (HTTP)
+    const echoConfig = {
+      broadcaster: "reverb" as const,
       key: reverbKey,
       wsHost: reverbHost,
-      wsPort: wsPort,
-      wssPort: wssPort,
+      wsPort: isProduction ? 443 : reverbPort,
+      wssPort: isProduction ? 443 : reverbPort,
       forceTLS: isProduction,
-      enabledTransports: isProduction ? ["wss"] : ["ws"],
+      enabledTransports: (isProduction
+        ? ["wss"]
+        : ["ws"]) as unknown as string[],
       authEndpoint: `${import.meta.env.VITE_API_URL}/broadcasting/auth`,
       auth: {
         headers: {
@@ -69,7 +70,17 @@ export function initWebSocket(): EchoInstance {
           "X-Browser-Token": browserToken || "",
         },
       },
+    };
+
+    console.debug("[WebSocket] Initializing Echo with config:", {
+      environment: isProduction ? "production" : "development",
+      host: reverbHost,
+      port: echoConfig.wsPort,
+      forceTLS: echoConfig.forceTLS,
+      transports: echoConfig.enabledTransports,
     });
+
+    echo = new Echo(echoConfig as any);
   } catch (error) {
     console.warn("Failed to initialize WebSocket:", error);
     echo = null;
