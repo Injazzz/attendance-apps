@@ -50,6 +50,7 @@ Login uji: `supervisor@test.com` / `password`
   - [2. Setup Frontend](#2-setup-frontend)
   - [3. Konfigurasi Database](#3-konfigurasi-database)
 - [Fitur Pemindaian QR](#fitur-pemindaian-qr)
+- [Laporan Absensi Personal](#laporan-absensi-personal)
 - [Peran & Izin Pengguna](#peran--izin-pengguna)
 - [Menjalankan Aplikasi](#menjalankan-aplikasi)
 - [Struktur Proyek](#struktur-proyek)
@@ -91,6 +92,8 @@ Login uji: `supervisor@test.com` / `password`
 ✅ **Pelaporan & Analitik**
 
 - Laporan kehadiran harian, mingguan, bulanan
+- **Laporan Absensi Personal** - Laporan kehadiran detail untuk setiap karyawan dengan statistik lengkap
+- Ekspor PDF untuk laporan personal
 - Laporan lembur
 - Analitik tingkat departemen & karyawan
 - Fungsionalitas ekspor Excel
@@ -121,6 +124,7 @@ Login uji: `supervisor@test.com` / `password`
 | **Intervention Image**        | 3.0     | Manipulasi gambar          |
 | **Laravel Media Library**     | 11.21   | Manajemen penyimpanan file |
 | **Laravel Activity Log**      | 4.12    | Pencatatan audit           |
+| **Barryvdh DomPDF**           | 3.1+    | Pembuatan PDF dari Blade   |
 | **SQLite/MySQL**              | Terbaru | Database                   |
 
 ### Frontend
@@ -518,6 +522,237 @@ $qrDisplay->qr_code_url
 
 ---
 
+## Laporan Absensi Personal
+
+### Gambaran Umum
+
+Laporan Absensi Personal memungkinkan setiap karyawan melihat dan mengunduh laporan kehadiran pribadi mereka dengan statistik lengkap dan ekspor PDF.
+
+### Fitur Utama
+
+✅ **Dashboard Laporan Personal**
+
+- Akses ke `/attendance/report`
+- Tampilan laporan kehadiran bulanan
+- Navigasi bulan: bulan sebelumnya/berikutnya
+- Statistik ringkas dengan kartu informasi
+- Daftar detail kehadiran harian
+
+✅ **Statistik Tersedia**
+
+- Total hari kerja dalam periode
+- Kehadiran (jumlah & persentase)
+- Keterlambatan (jumlah & total menit)
+- Tidak hadir
+- Cuti, Sakit, Setengah hari
+- Total jam kerja & jam lembur
+
+✅ **Detail Kehadiran Harian**
+
+- Tanggal dan hari kerja
+- Status (Hadir, Terlambat, Tidak Hadir, Cuti, Sakit, Setengah Hari)
+- Jam masuk & jam pulang
+- Total jam kerja & jam lembur
+- Menit terlambat & pulang awal
+- Lokasi/Situs
+- Catatan
+
+✅ **Ekspor PDF**
+
+- Tombol unduh untuk mengekspor laporan
+- File PDF berisi semua data dan statistik
+- Format profesional dengan styling
+- Nama file: `Laporan-Absensi-[Nama]-[TanggalMulai]-to-[TanggalAkhir].pdf`
+
+✅ **Responsive Design**
+
+- Desktop: Tampilan tabel untuk data detail
+- Mobile: Tampilan kartu untuk pengalaman lebih baik
+
+### Akses & Keamanan
+
+- ✅ Hanya user sendiri dapat melihat laporan mereka
+- ✅ Data di-filter berdasarkan `employee_id` dari authenticated user
+- ✅ Tidak diperlukan permission khusus (accessible untuk semua employee)
+- ✅ Middleware autentikasi Sanctum diperlukan
+- ✅ Validasi device via `X-Browser-Token` header
+
+### Endpoint API
+
+| Endpoint                                     | Metode | Deskripsi                    | Autentikasi |
+| -------------------------------------------- | ------ | ---------------------------- | ----------- |
+| `/api/v1/attendance-report/my-report`        | GET    | Ambil laporan kehadiran user | Sanctum     |
+| `/api/v1/attendance-report/my-report/export` | GET    | Ekspor laporan ke PDF        | Sanctum     |
+
+**Parameter Query:**
+
+- `start_date` (optional): Format `Y-m-d` (contoh: `2026-04-01`)
+- `end_date` (optional): Format `Y-m-d` (contoh: `2026-04-30`)
+- `month` (optional): Format `Y-m` (contoh: `2026-04`) - Alternatif untuk start/end date
+
+### Contoh Permintaan API
+
+**Get Laporan Bulan April 2026:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/attendance-report/my-report?month=2026-04" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "X-Browser-Token: YOUR_BROWSER_TOKEN"
+```
+
+**Export ke PDF:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/attendance-report/my-report/export?month=2026-04" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "X-Browser-Token: YOUR_BROWSER_TOKEN" \
+  --output "laporan.pdf"
+```
+
+**Get Laporan Custom Date Range:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/attendance-report/my-report?start_date=2026-04-01&end_date=2026-04-30" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "X-Browser-Token: YOUR_BROWSER_TOKEN"
+```
+
+### Format Respons API
+
+**Sukses (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "employee": {
+      "id": 1,
+      "full_name": "John Doe",
+      "employee_code": "2024001",
+      "department": {
+        "id": 1,
+        "dept_name": "Information Technology"
+      },
+      "position": {
+        "id": 1,
+        "position_name": "Developer"
+      }
+    },
+    "period": {
+      "start_date": "2026-04-01",
+      "end_date": "2026-04-30",
+      "start_date_formatted": "01 April 2026",
+      "end_date_formatted": "30 April 2026"
+    },
+    "statistics": {
+      "total_records": 22,
+      "present": 20,
+      "late": 2,
+      "absent": 0,
+      "leave": 0,
+      "sick": 0,
+      "half_day": 0,
+      "total_hours": 176.5,
+      "regular_hours": 174,
+      "overtime_hours": 2.5,
+      "total_late_minutes": 15,
+      "total_early_minutes": 0,
+      "attendance_rate": 90.9
+    },
+    "records": [
+      {
+        "id": 1,
+        "attendance_date": "2026-04-30",
+        "date_formatted": "30 April 2026",
+        "day_name": "Wednesday",
+        "check_in_time": "08:15:00",
+        "check_out_time": "17:30:00",
+        "total_hours": 9.25,
+        "regular_hours": 9,
+        "overtime_hours": 0.25,
+        "late_minutes": 15,
+        "early_minutes": 0,
+        "status": "late",
+        "status_label": "Terlambat",
+        "site": {
+          "id": 1,
+          "site_name": "Head Office"
+        },
+        "notes": null
+      }
+    ]
+  },
+  "message": "Laporan absensi berhasil diambil"
+}
+```
+
+**Error (401):**
+
+```json
+{
+  "success": false,
+  "message": "Unauthorized",
+  "data": null
+}
+```
+
+### Struktur File Frontend
+
+**Halaman Component:**
+
+- [src/pages/attendance/AttendanceReportPage.tsx](frontend/src/pages/attendance/AttendanceReportPage.tsx)
+
+**API Integration:**
+
+- [src/lib/api.ts](frontend/src/lib/api.ts) - `attendanceReportApi`
+
+**Custom Hook:**
+
+- [src/hooks/useAttendance.ts](frontend/src/hooks/useAttendance.ts) - `useAttendanceReport`
+
+**Router:**
+
+- [src/router/index.tsx](frontend/src/router/index.tsx) - Route `/attendance/report`
+
+**Navigation:**
+
+- [src/components/layout/Sidebar.tsx](frontend/src/components/layout/Sidebar.tsx) - Submenu Absensi
+- [src/components/layout/MobileNav.tsx](frontend/src/components/layout/MobileNav.tsx) - Mobile drawer
+
+### Struktur File Backend
+
+**Controller:**
+
+- [app/Http/Controllers/Api/AttendanceReportController.php](backend/app/Http/Controllers/Api/AttendanceReportController.php)
+
+**Routes:**
+
+- [routes/api.php](backend/routes/api.php) - Prefix `attendance-report`
+
+**Blade View untuk PDF:**
+
+- [resources/views/pdf/attendance-report.blade.php](backend/resources/views/pdf/attendance-report.blade.php)
+
+### Kustomisasi PDF
+
+Edit file Blade view untuk menyesuaikan tampilan PDF:
+
+```blade
+<!-- Header -->
+<h1>Laporan Absensi</h1>
+
+<!-- Employee Info -->
+Nama: {{ $employee->full_name }}
+NIP: {{ $employee->employee_code }}
+Departemen: {{ $employee->department->dept_name }}
+
+<!-- Statistics Cards -->
+<!-- Period Info -->
+<!-- Records Table -->
+```
+
+---
+
 ## Peran & Izin Pengguna
 
 ### Peran Tersedia
@@ -903,6 +1138,11 @@ Setelah dibuat, kunjungi: `http://localhost:8000`
 - `POST /api/v1/attendances` - Buat kehadiran manual
 - `GET /api/v1/attendances/{id}` - Dapatkan detail kehadiran
 
+**Laporan Absensi Personal:**
+
+- `GET /api/v1/attendance-report/my-report` - Dapatkan laporan kehadiran user
+- `GET /api/v1/attendance-report/my-report/export` - Ekspor laporan ke PDF
+
 **Data Master:**
 
 - `GET /api/v1/employees` - Daftar karyawan
@@ -1107,5 +1347,5 @@ Proyek ini dilisensikan di bawah Lisensi MIT.
 
 Untuk masalah atau pertanyaan, harap buat issue di repository atau hubungi tim pengembangan.
 
-**Terakhir Diperbarui:** April 2026
-**Versi:** 1.0.0
+**Terakhir Diperbarui:** April 20, 2026
+**Versi:** 1.1.0 - Personal Attendance Report dengan PDF Export
