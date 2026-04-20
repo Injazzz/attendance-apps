@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\AttendanceReportController;
 use App\Http\Controllers\Api\AttendanceRuleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
@@ -77,6 +78,12 @@ Route::prefix('v1')->group(function () {
             Route::patch('/{attendanceRecord}/manual', [AttendanceController::class, 'manualEdit'])
                 ->middleware('permission:attendance.manual_entry')
                 ->name('manual-edit');
+        });
+
+        // ── ATTENDANCE REPORT ─────────────────────────────────────
+        Route::prefix('attendance-report')->name('attendance-report.')->group(function () {
+            Route::get('/my-report', [AttendanceReportController::class, 'myReport'])->name('my-report');
+            Route::get('/my-report/export', [AttendanceReportController::class, 'exportMyReport'])->name('export');
         });
 
         // ── OVERTIME ──────────────────────────────────────────────

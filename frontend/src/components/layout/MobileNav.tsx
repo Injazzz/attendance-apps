@@ -16,6 +16,7 @@ import {
   Briefcase,
   Shield,
   Smartphone,
+  ChevronDown,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/utils";
@@ -40,8 +41,14 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Absensi", href: "/attendance", icon: Clock },
   { label: "Lembur", href: "/overtime", icon: Timer },
+];
+
+// Submenu untuk Absensi - untuk mobile
+const attendanceNav: NavItem[] = [
+  { label: "Checkin/Checkout", href: "/attendance", icon: Clock },
+  { label: "Riwayat Absensi", href: "/attendance/history", icon: FileText },
+  { label: "Laporan Absensi", href: "/attendance/report", icon: FileText },
 ];
 
 const managementNav: NavItem[] = [
@@ -110,6 +117,7 @@ const adminNav: NavItem[] = [
 export function MobileNav() {
   const { user, hasPermission, clearAuth } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -154,6 +162,53 @@ export function MobileNav() {
     </NavLink>
   );
 
+  // Submenu Absensi untuk mobile
+  const AttendanceSubmenu = () => {
+    const isExpanded = expandedMenu === "attendance";
+    return (
+      <div>
+        <button
+          onClick={() => setExpandedMenu(isExpanded ? null : "attendance")}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        >
+          <Clock className="w-4 h-4 shrink-0" />
+          <span className="flex-1 text-left">Absensi</span>
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 transition-transform",
+              isExpanded ? "rotate-180" : "",
+            )}
+          />
+        </button>
+        {isExpanded && (
+          <div className="ml-3 mt-1 space-y-1 border-l border-border pl-3">
+            {attendanceNav.map((item) => (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                onClick={() => {
+                  setIsOpen(false);
+                  setExpandedMenu(null);
+                }}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  )
+                }
+              >
+                <item.icon className="w-3.5 h-3.5" />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Bottom navigation for quick access */}
@@ -195,11 +250,12 @@ export function MobileNav() {
           </SheetHeader>
 
           <div className="overflow-y-auto h-full pb-20">
-            {/* Main Navigation */}
+            {/* Attendance with Submenu */}
             <div className="px-3 py-2">
               <p className="text-xs text-muted-foreground font-medium px-3 mb-1">
                 Utama
               </p>
+              <AttendanceSubmenu />
               {mainNav.map((item) => (
                 <NavLink_
                   key={item.href}

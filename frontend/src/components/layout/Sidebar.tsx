@@ -16,6 +16,7 @@ import {
   Smartphone,
   ChevronRight,
   Bell,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { authApi } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface NavItem {
   label: string;
@@ -34,9 +36,15 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Absensi", href: "/attendance", icon: Clock },
   { label: "Lembur", href: "/overtime", icon: Timer },
   { label: "Notifikasi", href: "/notifications", icon: Bell },
+];
+
+// Submenu untuk Absensi
+const attendanceNav: NavItem[] = [
+  { label: "Checkin/Checkout", href: "/attendance", icon: Clock },
+  { label: "Riwayat Absensi", href: "/attendance/history", icon: FileText },
+  { label: "Laporan Absensi", href: "/attendance/report", icon: FileText },
 ];
 
 const managementNav: NavItem[] = [
@@ -106,6 +114,7 @@ export function Sidebar() {
   const { user, hasPermission, clearAuth } = useAuthStore();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -153,6 +162,76 @@ export function Sidebar() {
     );
   };
 
+  // Collapsible menu untuk Absensi
+  const AttendanceMenu = () => {
+    const isExpanded = expandedMenu === "attendance";
+    return (
+      <div className="px-3 py-2">
+        <p className="text-xs text-muted-foreground font-medium px-3 mb-1">
+          MENU UTAMA
+        </p>
+
+        {/* Attendance dengan submenu */}
+        <div className="mb-0.5">
+          <button
+            onClick={() => setExpandedMenu(isExpanded ? null : "attendance")}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <Clock className="w-4 h-4 shrink-0" />
+            <span className="flex-1 text-left">Absensi</span>
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 transition-transform",
+                isExpanded ? "rotate-180" : "",
+              )}
+            />
+          </button>
+
+          {isExpanded && (
+            <div className="ml-3 mt-1 space-y-1 border-l border-border pl-3">
+              {attendanceNav.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground font-medium"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    )
+                  }
+                >
+                  <item.icon className="w-3.5 h-3.5" />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Main nav items lainnya */}
+        {mainNav.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-0.5",
+                isActive
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )
+            }
+          >
+            <item.icon className="w-4 h-4 shrink-0" />
+            {item.label}
+          </NavLink>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-card border-r">
       {/* Logo */}
@@ -165,7 +244,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 py-3 overflow-y-auto">
-        <NavGroup label="Menu Utama" items={mainNav} />
+        <AttendanceMenu />
         <Separator className="my-2" />
         <NavGroup label="Manajemen" items={managementNav} />
         <Separator className="my-2" />

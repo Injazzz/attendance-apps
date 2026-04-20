@@ -98,6 +98,17 @@ export const attendanceApi = {
     api.patch(`/attendance/${id}/manual`, data).then((r) => r.data),
 };
 
+// ── Attendance Report ───────────────────────────────────
+export const attendanceReportApi = {
+  getMyReport: (params: object) =>
+    api.get("/attendance-report/my-report", { params }).then((r) => r.data),
+  exportMyReport: (params: object) =>
+    api.get("/attendance-report/my-report/export", {
+      params,
+      responseType: "blob" as const,
+    }),
+};
+
 // ── Attendance Rules ────────────────────────────────────
 export const attendanceRuleApi = {
   getAll: () => api.get("/attendance-rules").then((r) => r.data),

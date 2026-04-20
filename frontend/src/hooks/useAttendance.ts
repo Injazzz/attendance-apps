@@ -1,4 +1,9 @@
-import { attendanceApi, attendanceRuleApi } from "@/lib/api";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  attendanceApi,
+  attendanceRuleApi,
+  attendanceReportApi,
+} from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const attendanceKeys = {
@@ -6,6 +11,8 @@ export const attendanceKeys = {
   today: () => [...attendanceKeys.all, "today"] as const,
   history: (filters: object) =>
     [...attendanceKeys.all, "history", filters] as const,
+  report: (filters: object) =>
+    [...attendanceKeys.all, "report", filters] as const,
   summary: (period: string) =>
     [...attendanceKeys.all, "summary", period] as const,
   rules: () => [...attendanceKeys.all, "rules"] as const,
@@ -28,6 +35,16 @@ export function useAttendanceHistory(filters: {
     queryKey: attendanceKeys.history(filters),
     queryFn: () => attendanceApi.getHistory(filters),
     placeholderData: (prev) => prev, // smooth pagination
+  });
+}
+
+export function useAttendanceReport(filters: {
+  start_date: string;
+  end_date: string;
+}) {
+  return useQuery({
+    queryKey: attendanceKeys.report(filters),
+    queryFn: () => attendanceReportApi.getMyReport(filters),
   });
 }
 

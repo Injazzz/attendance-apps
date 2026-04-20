@@ -27,6 +27,9 @@ const AttendancePage = lazy(() => import("@/pages/attendance/AttendancePage"));
 const AttendanceHistoryPage = lazy(
   () => import("@/pages/attendance/AttendanceHistoryPage"),
 );
+const AttendanceReportPage = lazy(
+  () => import("@/pages/attendance/AttendanceReportPage"),
+);
 
 // Overtime
 const OvertimePage = lazy(() => import("@/pages/overtime/OvertimePage"));
@@ -92,6 +95,7 @@ export const router = createBrowserRouter([
       // Attendance — semua user
       { path: "/attendance", element: w(AttendancePage) },
       { path: "/attendance/history", element: w(AttendanceHistoryPage) },
+      { path: "/attendance/report", element: w(AttendanceReportPage) },
 
       // Overtime — semua user, filter di controller
       { path: "/overtime", element: w(OvertimePage) },
