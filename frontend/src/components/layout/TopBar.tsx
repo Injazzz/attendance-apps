@@ -29,6 +29,7 @@ import {
   Briefcase,
   Shield,
   Smartphone,
+  Bell as BellIcon,
 } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,6 +46,7 @@ const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Absensi", href: "/attendance", icon: Clock },
   { label: "Lembur", href: "/overtime", icon: Timer },
+  { label: "Notifikasi", href: "/notifications", icon: BellIcon },
 ];
 
 const managementNav: NavItem[] = [
@@ -130,11 +132,11 @@ export function TopBar() {
 
   const { data } = useQuery({
     queryKey: ["notifications", "unread-count"],
-    queryFn: () => notificationApi.getAll({ is_read: false, per_page: 1 }),
+    queryFn: () => notificationApi.getAll({ per_page: 50 }),
     refetchInterval: 30000,
   });
 
-  const unreadCount = data?.meta?.total ?? 0;
+  const unreadCount = (data?.data ?? []).filter((n: any) => !n.read_at).length;
 
   const canShow = (item: NavItem) => {
     if (item.role)

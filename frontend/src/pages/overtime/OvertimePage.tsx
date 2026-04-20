@@ -37,6 +37,10 @@ const schema = z.object({
   reason: z.string().min(10, "Alasan minimal 10 karakter"),
 });
 
+const rejectSchema = z.object({
+  reason: z.string().min(5, "Alasan penolakan minimal 5 karakter"),
+});
+
 const STATUS_BADGE: Record<string, any> = {
   pending: "secondary",
   approved: "default",
@@ -46,6 +50,10 @@ const STATUS_BADGE: Record<string, any> = {
 export default function OvertimePage() {
   const { hasPermission } = useAuthStore();
   const [openForm, setOpenForm] = useState(false);
+  const [openRejectModal, setOpenRejectModal] = useState(false);
+  const [rejectingOvertimeId, setRejectingOvertimeId] = useState<number | null>(
+    null,
+  );
   const [tab, setTab] = useState("all");
   const qc = useQueryClient();
 
@@ -76,6 +84,15 @@ export default function OvertimePage() {
     defaultValues: { overtime_date: format(new Date(), "yyyy-MM-dd") },
   });
 
+  const {
+    register: registerReject,
+    handleSubmit: handleSubmitReject,
+    reset: resetReject,
+    formState: { errors: errorsReject },
+  } = useForm({
+    resolver: zodResolver(rejectSchema),
+  });
+
   const onSubmit = (d: any) => {
     submitMutation.mutate(d, {
       onSuccess: () => {
@@ -83,6 +100,21 @@ export default function OvertimePage() {
         reset();
       },
     });
+  };
+
+  const onRejectSubmit = (d: any) => {
+    if (rejectingOvertimeId) {
+      rejectMutation.mutate(
+        { id: rejectingOvertimeId, reason: d.reason },
+        {
+          onSuccess: () => {
+            setOpenRejectModal(false);
+            resetReject();
+            setRejectingOvertimeId(null);
+          },
+        },
+      );
+    }
   };
 
   const overtimes = data?.data ?? [];
@@ -152,10 +184,10 @@ export default function OvertimePage() {
                         variant="destructive"
                         className="flex-1"
                         onClick={() => {
-                          const reason = prompt("Alasan penolakan:");
-                          if (reason)
-                            rejectMutation.mutate({ id: ot.id, reason });
+                          setRejectingOvertimeId(ot.id);
+                          setOpenRejectModal(true);
                         }}
+                        disabled={rejectMutation.isPending}
                       >
                         <X className="w-3.5 h-3.5 mr-1" /> Tolak
                       </Button>
@@ -223,6 +255,59 @@ export default function OvertimePage() {
                   </>
                 ) : (
                   "Kirim Pengajuan"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal penolakan lembur */}
+      <Dialog open={openRejectModal} onOpenChange={setOpenRejectModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tolak Pengajuan Lembur</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={handleSubmitReject(onRejectSubmit)}
+            className="space-y-4"
+          >
+            <div className="space-y-1.5">
+              <Label>Alasan Penolakan</Label>
+              <Textarea
+                rows={3}
+                placeholder="Jelaskan alasan penolakan..."
+                {...registerReject("reason")}
+              />
+              {errorsReject.reason && (
+                <p className="text-xs text-destructive">
+                  {errorsReject.reason.message}
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOpenRejectModal(false);
+                  resetReject();
+                }}
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                variant="destructive"
+                disabled={rejectMutation.isPending}
+              >
+                {rejectMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Menolak...
+                  </>
+                ) : (
+                  "Tolak"
                 )}
               </Button>
             </DialogFooter>

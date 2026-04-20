@@ -13,6 +13,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ============================================================
+        // GLOBAL MIDDLEWARE - Applied to all requests
+        // ============================================================
+        $middleware->append([
+            // Trust proxy headers for ngrok/production environments
+            \Illuminate\Http\Middleware\TrustProxies::class,
+            // PWA Security Headers (manifest, service worker, etc)
+            \App\Http\Middleware\SetPwaSecurityHeaders::class,
+        ]);
+
+        // ============================================================
+        // API MIDDLEWARE
+        // ============================================================
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);

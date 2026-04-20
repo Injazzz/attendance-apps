@@ -166,10 +166,10 @@ export default function EmployeeFormPage() {
         // Handle file uploads
         if (key === "photo") {
           if (val instanceof FileList && val[0]) {
-            console.log("📸 Adding photo from FileList:", val[0].name);
+            // console.log("📸 Adding photo from FileList:", val[0].name);
             form.append(key, val[0]);
           } else if (val instanceof File) {
-            console.log("📸 Adding photo from File:", val.name);
+            // console.log("📸 Adding photo from File:", val.name);
             form.append(key, val);
           }
         } else {
@@ -179,7 +179,7 @@ export default function EmployeeFormPage() {
       });
 
       // Debug: log FormData content
-      console.log("📝 FormData content:");
+      // console.log("📝 FormData content:");
       for (const pair of form.entries()) {
         if (pair[1] instanceof File) {
           console.log(

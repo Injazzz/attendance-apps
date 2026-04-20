@@ -46,14 +46,22 @@ export function initWebSocket(): EchoInstance {
   }
 
   try {
+    // Determine ports based on environment
+    const isProduction = import.meta.env.PROD;
+    const wsPort =
+      (import.meta.env.VITE_REVERB_PORT as unknown as number) ?? 8080;
+    const wssPort = isProduction
+      ? 443
+      : ((import.meta.env.VITE_REVERB_PORT as unknown as number) ?? 443);
+
     echo = new Echo({
       broadcaster: "reverb",
       key: reverbKey,
       wsHost: reverbHost,
-      wsPort: (import.meta.env.VITE_REVERB_PORT as unknown as number) ?? 8080,
-      wssPort: (import.meta.env.VITE_REVERB_PORT as unknown as number) ?? 443,
-      forceTLS: import.meta.env.PROD,
-      enabledTransports: ["ws", "wss"],
+      wsPort: wsPort,
+      wssPort: wssPort,
+      forceTLS: isProduction,
+      enabledTransports: isProduction ? ["wss"] : ["ws"],
       authEndpoint: `${import.meta.env.VITE_API_URL}/broadcasting/auth`,
       auth: {
         headers: {

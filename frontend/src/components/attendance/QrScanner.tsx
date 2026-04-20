@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from "react";
 import QrScannerLib from "qr-scanner";
@@ -105,25 +106,16 @@ export function QrScanner() {
     let message = "Scan gagal";
 
     if (err.response?.status === 400 && err.response?.data?.errors) {
-      console.error("❌ Validation errors:", err.response.data.errors);
       const errors = err.response.data.errors as Record<string, string[]>;
       const errorValues = Object.values(errors);
       message = (errorValues[0] as string[])?.[0] ?? "Data tidak valid";
     } else if (err.response?.status === 422 && err.response?.data?.errors) {
-      console.error("❌ Validation errors:", err.response.data.errors);
       const errors = err.response.data.errors as Record<string, string[]>;
       const errorValues = Object.values(errors);
       message = (errorValues[0] as string[])?.[0] ?? "Data tidak valid";
     } else {
       message = err.response?.data?.message ?? message;
     }
-
-    console.error("❌ Full scan error response:", {
-      status: err.response?.status,
-      data: err.response?.data,
-      message,
-    });
-
     toast.error(`❌ ${message}`);
     setScanResult({
       status: "error",
@@ -136,13 +128,11 @@ export function QrScanner() {
   const isTokenBasedQr = (qrContent: string): boolean => {
     // Token-based: exactly 64 chars, alphanumeric only (random)
     if (qrContent.length === 64 && /^[a-zA-Z0-9]+$/.test(qrContent)) {
-      console.log("📨 Detected TOKEN-BASED QR");
       return true;
     }
 
     // Employee-id based: contains employee_id field
     if (qrContent.includes("employee_id")) {
-      console.log("👤 Detected EMPLOYEE-ID QR");
       return false;
     }
 
@@ -150,7 +140,6 @@ export function QrScanner() {
     try {
       const decoded = atob(qrContent);
       if (decoded && decoded.includes("employee_id")) {
-        console.log("👤 Detected EMPLOYEE-ID QR (base64)");
         return false;
       }
     } catch {
@@ -163,59 +152,37 @@ export function QrScanner() {
 
   // ── QR Parsing ─────────────────────────────────────────────
   const parseQrPayload = (qrData: string): QrPayload | null => {
-    console.log("🔍 Raw QR Data:", qrData);
-    console.log("📊 QR Data Type:", typeof qrData, "Length:", qrData.length);
-
     try {
       let json = qrData;
       try {
         const decoded = atob(qrData);
-        console.log("🔓 Base64 decoded:", decoded);
         if (decoded && decoded.includes("employee_id")) {
           json = decoded;
-          console.log("✅ Using base64 decoded data");
         }
       } catch {
         // Not base64, continue
-        console.log("⏭️ Not base64, using original data");
       }
 
       let payload;
       try {
         payload = JSON.parse(json);
-        console.log("✅ JSON parsed:", payload);
       } catch (_error) {
-        console.log("❌ JSON parse failed:", (_error as Error).message);
         if (json.includes("=") && json.includes("&")) {
           const params = new URLSearchParams(json);
           payload = {
             employee_id: parseInt(params.get("employee_id") || "0"),
             type: params.get("type"),
           };
-          console.log("✅ Parsed from URL params:", payload);
         } else {
-          console.log("❌ Not URL params, not JSON, giving up");
           return null;
         }
       }
-
-      console.log("📋 Payload:", payload);
-
       if (!payload.employee_id || !payload.type) {
-        console.log(
-          "❌ Missing required fields - employee_id:",
-          payload.employee_id,
-          "type:",
-          payload.type,
-        );
         return null;
       }
 
       const normalizedType = String(payload.type).toLowerCase();
-      console.log("🎯 Normalized type:", normalizedType);
-
       if (!["department", "site", "dept", "project"].includes(normalizedType)) {
-        console.log("❌ Invalid type value:", normalizedType);
         return null;
       }
 
@@ -227,14 +194,8 @@ export function QrScanner() {
             ? "site"
             : (normalizedType as any),
       };
-
-      console.log("✅ Final payload:", finalPayload);
       return finalPayload;
     } catch (_error) {
-      console.error(
-        "❌ Parsing error:",
-        _error instanceof Error ? _error.message : String(_error),
-      );
       return null;
     }
   };
@@ -247,7 +208,6 @@ export function QrScanner() {
       // Just trigger camera UI to show - scanner will be created in useEffect
       setIsShowingCamera(true);
     } catch (error: any) {
-      console.error("❌ Camera error:", error);
       toast.dismiss();
       toast.error(`❌ Gagal membuka kamera: ${error.message}`);
       setIsInitializing(false);
@@ -287,10 +247,6 @@ export function QrScanner() {
       ctx.scale(scale, scale);
       ctx.drawImage(videoRef.current, 0, 0);
 
-      console.log(
-        `📷 Captured canvas: ${canvas.width}x${canvas.height} (scaled 2x)`,
-      );
-
       // Convert canvas to blob and scan
       canvas.toBlob(
         async (blob) => {
@@ -304,8 +260,6 @@ export function QrScanner() {
           try {
             // Use qr-scanner to scan the captured image
             imageUrl = URL.createObjectURL(blob);
-            console.log("🔍 Scanning captured image...");
-
             // Try with different scan methods/options
             const result = await QrScannerLib.scanImage(
               imageUrl,
@@ -315,8 +269,6 @@ export function QrScanner() {
               false,
               true,
             );
-
-            console.log("✅ QR Result:", result);
             toast.dismiss();
             toast.success("✅ QR code terdeteksi!");
 
@@ -366,12 +318,6 @@ export function QrScanner() {
                   device_info: deviceInfo,
                 };
 
-            // Log the exact data being sent
-            console.log(
-              `📤 Sending ${isToken ? "TOKEN-BASED" : "EMPLOYEE-ID"} scan data:`,
-              JSON.stringify(scanData, null, 2),
-            );
-
             // Submit to API
             toast.loading("💾 Menyimpan absensi...");
             if (!navigator.onLine) {
@@ -393,11 +339,6 @@ export function QrScanner() {
             }
             setIsScanning(false);
           } catch (error: any) {
-            console.error("❌ Scan error details:", {
-              message: error.message,
-              code: error.code,
-              toString: error.toString(),
-            });
             toast.dismiss();
             const errMsg = error.message || String(error);
             if (
@@ -430,7 +371,6 @@ export function QrScanner() {
         0.95,
       ); // Use JPEG for better compression
     } catch (error: any) {
-      console.error("❌ Capture error:", error);
       toast.dismiss();
       toast.error(`❌ Error: ${error.message}`);
       setIsScanning(false);
@@ -456,14 +396,11 @@ export function QrScanner() {
 
     const initScanner = async () => {
       try {
-        console.log("🚀 Initializing QrScanner...");
         // Create QrScanner instance
         const scanner = new QrScannerLib(
           videoRef.current!,
           async (result: any) => {
             // Auto scan on frame - parse and submit immediately
-            console.log("✅ QR Auto-Detected:", result.data);
-
             // Stop scanner during processing
             await scanner.stop();
             toast.dismiss();
@@ -520,12 +457,6 @@ export function QrScanner() {
                   device_info: deviceInfo,
                 };
 
-            // Log the exact data being sent
-            console.log(
-              `📤 Sending ${isToken ? "TOKEN-BASED" : "EMPLOYEE-ID"} scan data:`,
-              JSON.stringify(scanData, null, 2),
-            );
-
             // Submit to API
             toast.loading("💾 Menyimpan absensi...");
             if (!navigator.onLine) {
@@ -571,12 +502,10 @@ export function QrScanner() {
 
         qrScannerRef.current = scanner;
         await scanner.start();
-        console.log("✅ QrScanner started successfully");
         toast.dismiss();
         toast.success("✅ Kamera siap. Arahkan ke QR code");
         setIsInitializing(false);
       } catch (error: any) {
-        console.error("❌ Scanner init error:", error);
         if (isMounted) {
           toast.dismiss();
           toast.error(`❌ Gagal membuka kamera: ${error.message}`);

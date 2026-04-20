@@ -15,6 +15,7 @@ import {
   Shield,
   Smartphone,
   ChevronRight,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Absensi", href: "/attendance", icon: Clock },
   { label: "Lembur", href: "/overtime", icon: Timer },
+  { label: "Notifikasi", href: "/notifications", icon: Bell },
 ];
 
 const managementNav: NavItem[] = [

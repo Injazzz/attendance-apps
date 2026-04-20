@@ -18,6 +18,9 @@ const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 // Main
 const DashboardPage = lazy(() => import("@/pages/dashboard/DashboardPage"));
 const ProfilePage = lazy(() => import("@/pages/profile/ProfilePage"));
+const NotificationPage = lazy(
+  () => import("@/pages/notification/NotificationPage"),
+);
 
 // Attendance
 const AttendancePage = lazy(() => import("@/pages/attendance/AttendancePage"));
@@ -84,6 +87,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <Navigate to="/dashboard" replace /> },
       { path: "/dashboard", element: w(DashboardPage) },
       { path: "/profile", element: w(ProfilePage) },
+      { path: "/notifications", element: w(NotificationPage) },
 
       // Attendance — semua user
       { path: "/attendance", element: w(AttendancePage) },

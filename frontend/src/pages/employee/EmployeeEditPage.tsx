@@ -118,7 +118,7 @@ export default function EmployeeEditPage() {
   });
 
   const photoFile = watch("photo");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-expect-error photoPreview is used in render at line 433
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [hasLocalFile, setHasLocalFile] = useState(false);
 
@@ -181,10 +181,10 @@ export default function EmployeeEditPage() {
         // Handle file uploads
         if (key === "photo") {
           if (val instanceof FileList && val[0]) {
-            console.log("📸 Adding photo from FileList:", val[0].name);
+            // console.log("📸 Adding photo from FileList:", val[0].name);
             form.append(key, val[0]);
           } else if (val instanceof File) {
-            console.log("📸 Adding photo from File:", val.name);
+            // console.log("📸 Adding photo from File:", val.name);
             form.append(key, val);
           }
         } else {
@@ -193,7 +193,7 @@ export default function EmployeeEditPage() {
       });
 
       // Debug: log FormData content
-      console.log("📝 FormData content for update:");
+      // console.log("📝 FormData content for update:");
       for (const pair of form.entries()) {
         if (pair[1] instanceof File) {
           console.log(
@@ -218,7 +218,7 @@ export default function EmployeeEditPage() {
       const photoInput = document.getElementById("photo") as HTMLInputElement;
       if (photoInput) {
         photoInput.value = "";
-        console.log("🧹 File input cleared");
+        // console.log("🧹 File input cleared");
       }
 
       if (response?.data) {

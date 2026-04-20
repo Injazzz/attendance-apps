@@ -22,7 +22,7 @@ const updateSW = registerSW({
     }
   },
   onOfflineReady() {
-    console.log("App siap digunakan offline");
+    // App ready for offline use
   },
 });
 

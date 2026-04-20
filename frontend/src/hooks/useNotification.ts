@@ -6,7 +6,7 @@ export function useNotifications() {
 
   const query = useQuery({
     queryKey: ["notifications"],
-    queryFn: () => notificationApi.getAll({ per_page: 20 }),
+    queryFn: () => notificationApi.getAll({ per_page: 50 }),
     refetchInterval: 30000,
   });
 
@@ -20,5 +20,10 @@ export function useNotifications() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
-  return { ...query, markRead, markAllRead };
+  const remove = useMutation({
+    mutationFn: notificationApi.remove,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+
+  return { ...query, markRead, markAllRead, remove };
 }
