@@ -9,14 +9,20 @@ import {
   useUpdateSite,
   useDeleteSite,
 } from "@/hooks/useMasterData";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { Pagination } from "@/components/shared/Pagination";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 
 const schema = z.object({
   site_code: z.string().min(1, "Kode site wajib diisi"),
@@ -54,13 +60,15 @@ export default function SitePage() {
   const [open, setOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useSites();
+  const { data, isLoading } = useSites({ page, per_page: 10 });
   const createMutation = useCreateSite();
   const updateMutation = useUpdateSite();
   const deleteMutation = useDeleteSite();
 
   const sites = data?.data ?? [];
+  const meta = data?.meta;
 
   const {
     register,
@@ -127,136 +135,240 @@ export default function SitePage() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div>
-      <PageHeader
-        title="Site / Proyek"
-        subtitle="Kelola lokasi proyek dan radius absensi"
-        actions={
-          <Button onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" /> Tambah Site
-          </Button>
-        }
-      />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Site / Proyek</h1>
+        <Button onClick={openCreate}>
+          <Plus className="w-4 h-4 mr-2" /> Tambah Site
+        </Button>
+      </div>
 
-      {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-36 rounded-xl" />
-          ))}
-        </div>
-      ) : sites.length === 0 ? (
-        <EmptyState
-          icon={MapPin}
-          title="Belum ada site"
-          description="Tambah site atau lokasi proyek pertama Anda"
-          action={{ label: "Tambah Site", onClick: openCreate }}
-        />
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sites.map((site: any) => (
-            <Card key={site.id} className="hover:shadow-sm transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {site.site_name}
-                    </p>
+      {/* Table */}
+      <div className="rounded-xl border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Kode</TableHead>
+              <TableHead>Nama Site</TableHead>
+              <TableHead className="hidden md:table-cell">
+                Project Manager
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Lokasi (GPS)
+              </TableHead>
+              <TableHead className="hidden sm:table-cell">Status</TableHead>
+              <TableHead className="w-20" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 10 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 6 }).map((__, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : sites.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-10 text-muted-foreground"
+                >
+                  Belum ada data site
+                </TableCell>
+              </TableRow>
+            ) : (
+              sites.map((site: any) => (
+                <TableRow key={site.id}>
+                  <TableCell className="font-medium text-sm">
+                    {site.site_code}
+                  </TableCell>
+                  <TableCell>
+                    <p className="font-medium">{site.site_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {site.site_code}
+                      {site.address}
                     </p>
-                  </div>
-                  <StatusBadge status={site.status} />
-                </div>
-                <div className="text-xs text-muted-foreground space-y-1 mb-3">
-                  <p>PM: {site.project_manager ?? "-"}</p>
-                  <p>
-                    GPS: {site.gps_latitude}, {site.gps_longitude}
-                  </p>
-                  <p>Radius: {site.gps_radius}m</p>
-                  <p>Mulai: {site.start_date}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => openEdit(site)}
-                  >
-                    <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setDeleteId(site.id)}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-sm">
+                    {site.project_manager ?? "-"}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                    {site.gps_latitude}, {site.gps_longitude}
+                    <br />
+                    <span className="text-xs">Radius: {site.gps_radius}m</span>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <StatusBadge status={site.status} />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-8 h-8"
+                        onClick={() => openEdit(site)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-8 h-8 text-destructive hover:text-destructive"
+                        onClick={() => setDeleteId(site.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {meta && meta.last_page > 1 && (
+        <Pagination meta={meta} onPageChange={setPage} />
       )}
 
-      {/* Form Dialog */}
+      {/* Dialog Form */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editData ? "Edit Site" : "Tambah Site"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>
-                  Kode Site <span className="text-destructive">*</span>
-                </Label>
-                <Input {...register("site_code")} disabled={!!editData} />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Kode Site</Label>
+                <Input
+                  placeholder="SITE001"
+                  {...register("site_code")}
+                  disabled={isPending || !!editData}
+                />
                 {errors.site_code && (
-                  <p className="text-xs text-destructive">
+                  <p className="text-xs text-destructive mt-1">
                     {errors.site_code.message}
                   </p>
                 )}
               </div>
-              <div className="space-y-1.5">
-                <Label>
-                  Nama Site <span className="text-destructive">*</span>
-                </Label>
-                <Input {...register("site_name")} />
+              <div>
+                <Label>Nama Site</Label>
+                <Input
+                  placeholder="Kantor Pusat"
+                  {...register("site_name")}
+                  disabled={isPending}
+                />
                 {errors.site_name && (
-                  <p className="text-xs text-destructive">
+                  <p className="text-xs text-destructive mt-1">
                     {errors.site_name.message}
                   </p>
                 )}
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Manajer Proyek</Label>
-              <Input {...register("project_manager")} />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Latitude</Label>
+                <Input
+                  placeholder="-6.2088"
+                  {...register("gps_latitude")}
+                  disabled={isPending}
+                />
+                {errors.gps_latitude && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.gps_latitude.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label>Longitude</Label>
+                <Input
+                  placeholder="106.8456"
+                  {...register("gps_longitude")}
+                  disabled={isPending}
+                />
+                {errors.gps_longitude && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.gps_longitude.message}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
+
+            <div>
+              <Label>Radius (meter)</Label>
+              <Input
+                type="number"
+                min="10"
+                max="5000"
+                placeholder="100"
+                {...register("gps_radius")}
+                disabled={isPending}
+              />
+              {errors.gps_radius && (
+                <p className="text-xs text-destructive mt-1">
+                  {errors.gps_radius.message}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Karyawan harus berada dalam radius ini untuk bisa absen
+              </p>
+            </div>
+
+            <div>
               <Label>Alamat</Label>
-              <Input {...register("address")} />
+              <Input
+                placeholder="Jl. Contoh No. 1"
+                {...register("address")}
+                disabled={isPending}
+              />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>
-                  Tanggal Mulai <span className="text-destructive">*</span>
-                </Label>
-                <Input type="date" {...register("start_date")} />
+
+            <div>
+              <Label>Project Manager</Label>
+              <Input
+                placeholder="Nama PM"
+                {...register("project_manager")}
+                disabled={isPending}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Tanggal Mulai</Label>
+                <Input
+                  type="date"
+                  {...register("start_date")}
+                  disabled={isPending}
+                />
+                {errors.start_date && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.start_date.message}
+                  </p>
+                )}
               </div>
-              <div className="space-y-1.5">
+              <div>
                 <Label>Tanggal Selesai</Label>
-                <Input type="date" {...register("end_date")} />
+                <Input
+                  type="date"
+                  {...register("end_date")}
+                  disabled={isPending}
+                />
               </div>
             </div>
-            <div className="space-y-1.5">
+
+            <div>
               <Label>Status</Label>
               <Select
                 defaultValue="active"
                 onValueChange={(v) => setValue("status", v as any)}
               >
-                <SelectTrigger>
+                <SelectTrigger disabled={isPending}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -265,82 +377,44 @@ export default function SitePage() {
                   <SelectItem value="hold">Ditangguhkan</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3">Koordinat GPS</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>
-                    Latitude <span className="text-destructive">*</span>
-                  </Label>
-                  <Input placeholder="-6.2088" {...register("gps_latitude")} />
-                  {errors.gps_latitude && (
-                    <p className="text-xs text-destructive">
-                      {errors.gps_latitude.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label>
-                    Longitude <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    placeholder="106.8456"
-                    {...register("gps_longitude")}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5 mt-3">
-                <Label>
-                  Radius Absensi (meter){" "}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  type="number"
-                  min="10"
-                  max="5000"
-                  {...register("gps_radius")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Karyawan harus berada dalam radius ini untuk bisa absen
+              {errors.status && (
+                <p className="text-xs text-destructive mt-1">
+                  {errors.status.message}
                 </p>
-              </div>
+              )}
             </div>
+
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
+                disabled={isPending}
               >
                 Batal
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  "Simpan"
-                )}
+                {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {editData ? "Simpan" : "Tambah"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteId !== null}
-        onOpenChange={(v) => !v && setDeleteId(null)}
-        title="Nonaktifkan Site?"
-        description="Site akan dinonaktifkan. Data absensi yang sudah ada tetap tersimpan."
-        confirmLabel="Ya, Nonaktifkan"
-        variant="destructive"
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Hapus Site"
+        description="Apakah Anda yakin ingin menghapus site ini?"
+        confirmLabel="Ya, Hapus"
         onConfirm={() => {
-          if (deleteId)
+          if (deleteId) {
             deleteMutation.mutate(deleteId, {
               onSuccess: () => setDeleteId(null),
             });
+          }
         }}
       />
     </div>
