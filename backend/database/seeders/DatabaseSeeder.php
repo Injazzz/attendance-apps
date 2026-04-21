@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             SystemSettingSeeder::class,  // 4. Setting sistem
             AdminUserSeeder::class,      // 5. Super admin user
             UserSeeder::class,           // 6. Test users dengan berbagai roles
+            EmployeeSeeder::class,       // 7. 10 karyawan lengkap dengan akun
+            AttendanceSeeder::class,     // 8. Record absensi dengan status bervariasi
         ]);
     }
 }

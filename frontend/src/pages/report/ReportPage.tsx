@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/shared/Pagination";
 import {
   Select,
   SelectContent,
@@ -75,14 +76,28 @@ export default function ReportPage() {
   const [interval, setInterval] = useState<Interval>("monthly");
   const [filters, setFilters] = useState(() => getDateRange("monthly"));
   const [applied, setApplied] = useState(filters);
+  const [currentPage, setCurrentPage] = useState(1);
   const { download, isDownloading } = useExportReport();
 
-  const { data, isLoading } = useAttendanceReport(applied, true);
+  const { data, isLoading } = useAttendanceReport(applied, currentPage, true);
   const records = data?.data ?? [];
   const meta = data?.meta;
 
+  // Debug logging
+  // if (typeof window !== "undefined" && data) {
+  //   console.log("📊 Report API Response:", {
+  //     hasData: !!data,
+  //     dataKeys: data ? Object.keys(data) : [],
+  //     recordsCount: records.length,
+  //     meta: meta,
+  //     totalFromMeta: meta?.total,
+  //     lastPageFromMeta: meta?.last_page,
+  //   });
+  // }
+
   const applyFilter = () => {
     setApplied({ ...filters });
+    setCurrentPage(1); // Reset ke halaman 1 saat apply filter
   };
 
   const handleIntervalChange = (v: Interval) => {
@@ -90,6 +105,7 @@ export default function ReportPage() {
     const range = getDateRange(v);
     setFilters(range);
     setApplied(range);
+    setCurrentPage(1); // Reset ke halaman 1 saat interval berubah
   };
 
   return (
@@ -171,13 +187,6 @@ export default function ReportPage() {
         </CardContent>
       </Card>
 
-      {/* Ringkasan */}
-      {meta && (
-        <p className="text-sm text-muted-foreground">
-          Menampilkan {records.length} dari {meta.total} data
-        </p>
-      )}
-
       {/* Tabel */}
       <div className="rounded-xl border overflow-auto">
         <Table>
@@ -241,6 +250,11 @@ export default function ReportPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {meta && meta.last_page > 1 && (
+        <Pagination meta={meta} onPageChange={setCurrentPage} />
+      )}
     </div>
   );
 }

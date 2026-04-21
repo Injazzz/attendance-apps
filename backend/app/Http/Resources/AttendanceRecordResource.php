@@ -52,7 +52,7 @@ class AttendanceRecordResource extends JsonResource
             'leave'         => 'Cuti',
             'sick'          => 'Sakit',
             'business_trip' => 'Perjalanan Dinas',
-            default         => $this->status,
+            default         => ucfirst($this->status ?? 'unknown'),
         };
     }
 

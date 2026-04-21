@@ -3,10 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { reportApi } from "@/lib/api";
 import { toast } from "sonner";
 
-export function useAttendanceReport(params: object, enabled = true) {
+export function useAttendanceReport(
+  params: object,
+  page: number = 1,
+  enabled = true,
+) {
   return useQuery({
-    queryKey: ["reports", "attendance", params],
-    queryFn: () => reportApi.getAttendance(params),
+    queryKey: ["reports", "attendance", params, page],
+    queryFn: () => reportApi.getAttendance({ ...params, page }),
     enabled,
   });
 }

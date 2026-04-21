@@ -19,7 +19,7 @@ class ReportController extends BaseController
         private readonly AttendanceRepositoryInterface $repo
     ) {}
 
-    public function attendance(AttendanceReportRequest $request): JsonResponse
+    public function attendance(AttendanceReportRequest $request)
     {
         $records = AttendanceRecord::with([
             'employee:id,full_name,employee_code,department_id,position_id',
@@ -40,9 +40,8 @@ class ReportController extends BaseController
         ->orderBy('employee_id')
         ->paginate($request->per_page ?? 30);
 
-        return response()->json(
-            new AttendanceRecordCollection($records)
-        );
+        // Return resource collection directly - Laravel will merge with() data
+        return new AttendanceRecordCollection($records);
     }
 
     public function summary(Request $request): JsonResponse
