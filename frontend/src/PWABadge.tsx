@@ -2,6 +2,7 @@ import "./PWABadge.css";
 
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { useEffect, useState } from "react";
+import { Smartphone, RotateCcw, X, Mail } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -33,6 +34,7 @@ function PWABadge() {
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -60,6 +62,12 @@ function PWABadge() {
 
   function close() {
     setNeedRefresh(false);
+    setIsCollapsed(false);
+  }
+
+  function closeInstall() {
+    setIsInstallable(false);
+    setIsCollapsed(false);
   }
 
   async function handleInstall() {
@@ -75,46 +83,101 @@ function PWABadge() {
     }
   }
 
+  const hasNotification = (isInstallable && installPrompt) || needRefresh;
+
   return (
     <div className="PWABadge" role="alert" aria-labelledby="toast-message">
-      {isInstallable && installPrompt && (
-        <div className="PWABadge-toast">
-          <div className="PWABadge-message">
-            <span id="toast-message">
-              Instal aplikasi untuk akses yang lebih baik
-            </span>
-          </div>
-          <div className="PWABadge-buttons">
-            <button className="PWABadge-toast-button" onClick={handleInstall}>
-              Instal
-            </button>
+      {hasNotification && (
+        <div className={`PWABadge-toast ${isCollapsed ? "collapsed" : ""}`}>
+          {!isCollapsed ? (
+            <>
+              {isInstallable && installPrompt && (
+                <>
+                  <div className="PWABadge-header">
+                    <div className="PWABadge-icon install-icon">
+                      <Smartphone size={20} />
+                    </div>
+                    <div className="PWABadge-title">Instal Aplikasi</div>
+                    <button
+                      className="PWABadge-collapse-btn"
+                      onClick={() => setIsCollapsed(true)}
+                      aria-label="Collapse notification"
+                      title="Sembunyikan"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div className="PWABadge-message">
+                    <span id="toast-message">
+                      Akses lebih cepat dengan instal aplikasi
+                    </span>
+                  </div>
+                  <div className="PWABadge-buttons">
+                    <button
+                      className="PWABadge-toast-button-primary"
+                      onClick={handleInstall}
+                    >
+                      Instal
+                    </button>
+                    <button
+                      className="PWABadge-toast-button-secondary"
+                      onClick={closeInstall}
+                    >
+                      Nanti
+                    </button>
+                  </div>
+                </>
+              )}
+              {needRefresh && (
+                <>
+                  <div className="PWABadge-header">
+                    <div className="PWABadge-icon update-icon">
+                      <RotateCcw size={20} />
+                    </div>
+                    <div className="PWABadge-title">Update Tersedia</div>
+                    <button
+                      className="PWABadge-collapse-btn"
+                      onClick={() => setIsCollapsed(true)}
+                      aria-label="Collapse notification"
+                      title="Sembunyikan"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div className="PWABadge-message">
+                    <span id="toast-message">
+                      Konten baru tersedia, muat ulang untuk mendapatkan versi
+                      terbaru.
+                    </span>
+                  </div>
+                  <div className="PWABadge-buttons">
+                    <button
+                      className="PWABadge-toast-button-primary"
+                      onClick={() => updateServiceWorker(true)}
+                    >
+                      Muat Ulang
+                    </button>
+                    <button
+                      className="PWABadge-toast-button-secondary"
+                      onClick={close}
+                    >
+                      Nanti
+                    </button>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
             <button
-              className="PWABadge-toast-button"
-              onClick={() => setIsInstallable(false)}
+              className="PWABadge-expand-btn"
+              onClick={() => setIsCollapsed(false)}
+              aria-label="Expand notification"
+              title="Tampilkan pemberitahuan"
             >
-              Tutup
+              <span className="PWABadge-badge">1</span>
+              <Mail size={20} />
             </button>
-          </div>
-        </div>
-      )}
-      {needRefresh && (
-        <div className="PWABadge-toast">
-          <div className="PWABadge-message">
-            <span id="toast-message">
-              Konten baru tersedia, klik reload untuk update.
-            </span>
-          </div>
-          <div className="PWABadge-buttons">
-            <button
-              className="PWABadge-toast-button"
-              onClick={() => updateServiceWorker(true)}
-            >
-              Reload
-            </button>
-            <button className="PWABadge-toast-button" onClick={() => close()}>
-              Tutup
-            </button>
-          </div>
+          )}
         </div>
       )}
     </div>

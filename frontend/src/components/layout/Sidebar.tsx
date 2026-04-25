@@ -8,7 +8,6 @@ import {
   QrCode,
   Settings,
   LogOut,
-  Timer,
   MapPin,
   Building2,
   Briefcase,
@@ -36,7 +35,7 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Lembur", href: "/overtime", icon: Timer },
+  // { label: "Lembur", href: "/overtime", icon: Timer },
   { label: "Notifikasi", href: "/notifications", icon: Bell },
 ];
 

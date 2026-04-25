@@ -1,29 +1,312 @@
 .PWABadge-container {
-    padding: 0;
-    margin: 0;
-    width: 0;
-    height: 0;
+  padding: 0;
+  margin: 0;
+  width: 0;
+  height: 0;
 }
+
+/* Main toast container */
 .PWABadge-toast {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    margin: 16px;
-    padding: 12px;
-    border: 1px solid #8885;
-    border-radius: 4px;
-    z-index: 1;
-    text-align: left;
-    box-shadow: 3px 4px 5px 0 #8885;
-    background-color: white;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  margin: 0;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  z-index: 9999;
+  text-align: left;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  animation: slideInUp 0.3s ease-out;
+  max-width: 380px;
+  backdrop-filter: blur(10px);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
 }
-.PWABadge-toast-message {
-    margin-bottom: 8px;
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .PWABadge-toast {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
 }
-.PWABadge-toast-button {
-    border: 1px solid #8885;
-    outline: none;
-    margin-right: 5px;
-    border-radius: 2px;
-    padding: 3px 10px;
+
+.PWABadge-toast.collapsed {
+  padding: 0;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+  max-width: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .PWABadge-toast.collapsed {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+  }
+}
+
+/* Header with title and close button */
+.PWABadge-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.PWABadge-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: currentColor;
+}
+
+.PWABadge-icon.install-icon {
+  background-color: #dbeafe;
+  color: #0369a1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .PWABadge-icon.install-icon {
+    background-color: #0c4a6e;
+    color: #7dd3fc;
+  }
+}
+
+.PWABadge-icon.update-icon {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+@media (prefers-color-scheme: dark) {
+  .PWABadge-icon.update-icon {
+    background-color: #064e3b;
+    color: #86efac;
+  }
+}
+
+.PWABadge-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .PWABadge-title {
+    color: #f3f4f6;
+  }
+}
+
+.PWABadge-collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.PWABadge-collapse-btn:hover {
+  background-color: #e5e7eb;
+  color: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  .PWABadge-collapse-btn:hover {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+}
+
+/* Message text */
+.PWABadge-message {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+@media (prefers-color-scheme: dark) {
+  .PWABadge-message {
+    color: #d1d5db;
+  }
+}
+
+/* Button container */
+.PWABadge-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.PWABadge-toast-button-primary {
+  flex: 1;
+  min-width: 80px;
+  border: none;
+  outline: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.PWABadge-toast-button-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
+}
+
+.PWABadge-toast-button-primary:active {
+  transform: translateY(0);
+}
+
+.PWABadge-toast-button-secondary {
+  flex: 1;
+  min-width: 80px;
+  border: 1px solid #e5e7eb;
+  outline: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: #f9fafb;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.PWABadge-toast-button-secondary:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  color: #4b5563;
+}
+
+.PWABadge-toast-button-secondary:active {
+  background-color: #e5e7eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .PWABadge-toast-button-secondary {
+    border-color: #4b5563;
+    background-color: #111827;
+    color: #d1d5db;
+  }
+
+  .PWABadge-toast-button-secondary:hover {
+    background-color: #1f2937;
+    border-color: #6b7280;
+    color: #f3f4f6;
+  }
+
+  .PWABadge-toast-button-secondary:active {
+    background-color: #374151;
+  }
+}
+
+/* Collapsed button */
+.PWABadge-expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.PWABadge-expand-btn:hover {
+  transform: scale(1.05);
+}
+
+.PWABadge-expand-btn:active {
+  transform: scale(0.98);
+}
+
+.PWABadge-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .PWABadge-toast {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    max-width: none;
+    margin: 0;
+  }
+
+  .PWABadge-buttons {
+    flex-direction: column;
+  }
+
+  .PWABadge-toast-button-primary,
+  .PWABadge-toast-button-secondary {
+    width: 100%;
+  }
 }

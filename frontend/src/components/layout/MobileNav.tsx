@@ -4,7 +4,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Clock,
-  Timer,
   Users,
   Menu,
   FileText,
@@ -41,7 +40,7 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Lembur", href: "/overtime", icon: Timer },
+  // { label: "Lembur", href: "/overtime", icon: Timer },
 ];
 
 // Submenu untuk Absensi - untuk mobile
